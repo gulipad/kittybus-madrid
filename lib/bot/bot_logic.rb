@@ -1,11 +1,9 @@
-
-
 class BotLogic < BaseBotLogic
 
 	def self.setup
-		set_welcome_message "Welcome!"
+		set_welcome_message "Hola, soy Busybot! Te ayudo a saber cuanto le queda al bus."
 		set_get_started_button "bot_start_payload"
-		set_bot_menu
+		set_bot_menu %W(Reset)
 	end
 
 	def self.cron
@@ -13,68 +11,53 @@ class BotLogic < BaseBotLogic
 	end
 
 	def self.bot_logic
-		ENV["RAILS_ENV"] = "development"
 
-		#binding.pry
+		ENV["DOMAIN_NAME"] = "https://6ea72459.ngrok.io"
 
-		if @request_type == "CALLBACK" and @fb_params.payload == "RESET_BOT"
-			@current_user.delete
-			reply_message "Removed all your data from our servers."
-			return
-		end
-
-		state_action 0, :greeting
-		state_action 1, :subscribe
-		state_action 2, :confirm
-		state_action 3, :onboarded
+		if @request_type == "CALLBACK"
+      		case @fb_params.payload
+      			when "RESET_BOT"
+        		@current_user.delete
+        		reply_message "Removed all your data from our servers."
+        		return
+        		when "bot_start_payload"
+        			reply_message " :cat: Miau! Dime el código de parada de bus para empezar!"
+        			state_go 1
+        		return
+        		
+      	end
+    end
+		state_action 1, :get_stop_id
+		state_action 2, :get_bus_times
 	end
 
-	def self.greeting
-		reply_message "To make it a little easy. Could you type your due date again just this way: 28-04-2017?"
-		state_go
-	end 
-
-	def self.subscribe
-		due_date = Date.parse get_message
-
-		@current_user.profile = {due_date: due_date.to_s}
-		@current_user.save!
-
-		reply_quick_buttons "Okay #{due_date.to_s}. Did I get it right?"
-		state_go
-	rescue ArgumentError
-		reply_message "{Sorry I do not undestand this format|Can you try again? Format is DD/MM/YYYY}"
-	end 
-
-	def self.confirm
-		if get_message == "Yes"
-			subscribe_user("pregnant")	
+	def self.get_stop_id
+		stop_id = get_message
+		response = get_emt_data(stop_id)
+		if response['errorCode'] != "-1"
+			@current_user.profile = {stop_id: stop_id}
+			@current_user.profile = {response: response}
+			reply_message  "Lo tengo! Parada #{@current_user.profile[:response]['stop']['direction']}"
+			bus_lines = get_lines(response)
+			reply_quick_reply "¿Cuál es tu bus?", bus_lines
 			state_go
-			reply_message "Awwww sweet! You are all set now. I'll start to track your pregnancy for you. Can't wait :bride_with_veil::heart::baby_bottle:"
+		else 
+			reply_message ":cat: Oooops. No tengo datos de esta parada. Es posible que no haya autobuses a esta hora.:crying_cat_face:"
+			reply_message "Me dices otra? :smiley_cat:"
+		end
+	end
+
+	def self.get_bus_times
+		bus_id = get_message
+		times = get_times(bus_id)
+		if times.length == 1
+			reply_message ":cat:Miau! El bus #{times[0]}.  Es el último del día!."
+			state_go 1
 		else
-			reply_message "Ohh Sorry, please use this format: DD/MM/YYYY"
-			@current_user.profile = {}
-			@current_user.save!
-			state_reset
-		end		
+			reply_message "El primer bus #{times[0]}, y el siguiente #{times[1]}. :cat: Miau! "
+			reply_message "Buen viaje!"
+			state_go 1
+		end
 	end
-
-	def self.onboarded
-		output_current_week		
-	end 
-
-	### helper functions
-
-	def self.calculate_current_week
-		user_date = Date.parse @current_user.profile[:due_date] 
-		server_date = Date.parse Time.now.to_s
-
-		40 - ((user_date - server_date).to_i / 7)
-	end
-
-	def self.output_current_week
-		current_week = calculate_current_week
-		reply_message "you are in week number #{current_week}"
-	end
-
 end
+

@@ -26,6 +26,7 @@ gem 'mechanize'
 gem 'messenger-ruby'
 
 gem 'facebook-messenger'
+gem 'rb-readline'
 
 
 # Use jquery as the JavaScript library

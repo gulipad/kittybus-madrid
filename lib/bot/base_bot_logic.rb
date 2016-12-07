@@ -55,6 +55,19 @@ class BaseBotLogic
     end
   end
 
+  def self.reply_quick_reply(msg, options)
+    options ||= %W(Yes No)
+    if @request_type == "TEXT" or @request_type == "CALLBACK"
+      Bot.deliver(
+        recipient: @fb_params.sender,
+        message: {
+          text: msg,
+          quick_replies: options.map { |option| {content_type: 'text', title: option, payload: "QUICK_#{option.upcase}"} }
+        }
+      )
+    end
+  end
+
   def self.reply_quick_buttons(msg, options)
     options ||= %W(Yes No)
     if @request_type == "TEXT" or @request_type == "CALLBACK"
@@ -145,6 +158,7 @@ class BaseBotLogic
     end
   end
 
+
   def self.handle_user
 
     #binding.pry
@@ -212,8 +226,68 @@ class BaseBotLogic
     #  puts e
   end
 
+  ##EMT Madrid Module
+  def self.get_emt_data(stopId)
+    url = "https://openbus.emtmadrid.es:9443/emt-proxy-server/last/media/GetEstimatesIncident.php"
+    idClient = "WEB.SERV.ignaciomorenopubul@gmail.com"
+    passKey = "20A8A37A-5D64-4EF7-9D79-B8F85CCD9EA6"
+    request = {
+        :idClient => idClient,
+        :passKey => passKey,
+        :idStop  => stopId,
+        :Text_EstimationsRequired_YN => "Y",
+        :Text_StopRequired_YN => "Y",
+        }
 
+    response = HTTParty.post(url, :body => request, :headers => {"Content-Type" => "application/x-www-form-urlencoded"}) 
+    response = JSON.parse(response.body)
+    isArray = response['arrives']['arriveEstimationList']['arrive'].kind_of?(Array)
+    if !isArray
+      response['arrives']['arriveEstimationList']['arrive']= [response['arrives']['arriveEstimationList']['arrive']]
+    end
+    response
+  end
 
+  def self.get_lines(response)
+      bus_list = response['arrives']['arriveEstimationList']['arrive']
+      bus_line_conductor = bus_list.map do |item|
+        item['lineId']
+      end
+      bus_lines_available = bus_line_conductor.uniq
+ 
+  end
+
+  def self.get_times(bus_id)
+    response =  @current_user.profile[:response]
+    bus_list = response['arrives']['arriveEstimationList']['arrive']
+    bus_line_conductor = bus_list.map do |item|
+      item['lineId']
+    end  
+    bus_time_conductor = bus_list.map do |item|
+        if item['busTimeLeft'] != 999999
+          minutes = item['busTimeLeft'].to_int/60
+          if minutes == 1
+            minutes = "viene en 1 minuto"
+          elsif minutes == 0
+            minutes = "llega en ná de ná! menos de un minuto :scream_cat:"
+          else
+            minutes = "viene en #{minutes} minutos"
+          end
+        else
+          minutes = "tardará más de 20 minutos"
+        end
+    end
+    bus = bus_line_conductor.each_with_index.map { |a, i| a == bus_id ? i : nil }.compact
+    puts "START"
+    puts bus.length
+    if bus.length > 1
+      times = [bus_time_conductor[bus[0]],bus_time_conductor[bus[1]]]
+    else
+      times = [bus_time_conductor[bus[0]]]
+    end
+    puts times
+    times
+  end
   ## websearch MODULE
 
   def self.search_request_on_website(options)

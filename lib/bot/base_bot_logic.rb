@@ -241,6 +241,9 @@ class BaseBotLogic
 
     response = HTTParty.post(url, :body => request, :headers => {"Content-Type" => "application/x-www-form-urlencoded"}) 
     response = JSON.parse(response.body)
+    if response[:errorCode] != "-1"
+      return response
+    end
     isArray = response['arrives']['arriveEstimationList']['arrive'].kind_of?(Array)
     if !isArray
       response['arrives']['arriveEstimationList']['arrive']= [response['arrives']['arriveEstimationList']['arrive']]
@@ -262,7 +265,10 @@ class BaseBotLogic
     bus_list = response['arrives']['arriveEstimationList']['arrive']
     bus_line_conductor = bus_list.map do |item|
       item['lineId']
-    end  
+    end 
+    if !bus_line_conductor.uniq.include?(bus_id) 
+      return "not_included"
+    end
     bus_time_conductor = bus_list.map do |item|
         if item['busTimeLeft'] != 999999
           minutes = item['busTimeLeft'].to_int/60

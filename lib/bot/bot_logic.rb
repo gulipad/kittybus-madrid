@@ -12,7 +12,7 @@ class BotLogic < BaseBotLogic
 
 	def self.bot_logic
 
-		ENV["DOMAIN_NAME"] = "https://fbcdaa52.ngrok.io"
+		ENV["DOMAIN_NAME"] = "https://a27d512c.ngrok.io"
 
 		if @request_type == "CALLBACK"
       		case @fb_params.payload
@@ -72,8 +72,8 @@ class BotLogic < BaseBotLogic
 					reply_message ":cat:Miau! El bus #{times[0]}.  Es el último del día!"
 					state_go 1
 				else
-					reply_message "El primer bus #{times[0]}, y el siguiente #{times[1]}. :cat: Miau! " || "Ok! :cat: Tu primer bus #{times[0]}, y hay otro que #{times[0]}."
-					reply_message "Buen viaje!" || "Estoy aqui cuando quieras!:heart_eyes_cat:" || "Ten un viaje estupendo! :cat:"
+					reply_message ["El primer bus #{times[0]}, y el siguiente #{times[1]}. :cat: Miau! ", "Ok! :cat: Tu primer bus #{times[0]}, y hay otro que #{times[1]}."].sample
+					reply_message ["Buen viaje!", "Estoy aqui cuando quieras!:heart_eyes_cat:", "Ten un viaje estupendo! :cat:"].sample
 					state_go 1
 				end
 			else

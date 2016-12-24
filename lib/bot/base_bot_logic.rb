@@ -221,9 +221,8 @@ class BaseBotLogic
 
     bot_logic
 
-
-    #rescue Exception => e
-    #  puts e
+    rescue Exception => e
+     puts e
   end
 
   ##EMT Madrid Module

@@ -225,6 +225,9 @@ class BaseBotLogic
      puts e
   end
 
+  def self.api_ai
+    client = ApiAiRuby::Client.new(:client_access_token => '1ba3cc5b1fa0435589b75483343622d5')
+  end
   ##EMT Madrid Module
   def self.get_emt_data(stopId)
     url = "https://openbus.emtmadrid.es:9443/emt-proxy-server/last/media/GetEstimatesIncident.php"
@@ -243,6 +246,7 @@ class BaseBotLogic
     if response[:errorCode] != "-1"
       return response
     end
+    puts response
     isArray = response['arrives']['arriveEstimationList']['arrive'].kind_of?(Array)
     if !isArray
       response['arrives']['arriveEstimationList']['arrive']= [response['arrives']['arriveEstimationList']['arrive']]

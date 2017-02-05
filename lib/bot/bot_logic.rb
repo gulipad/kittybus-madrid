@@ -1,5 +1,5 @@
 class BotLogic < BaseBotLogic
-
+	
 	def self.setup
 		set_welcome_message "Hola, soy KittyBot! Te ayudo a saber cuánto le queda al bus en Madrid."
 		set_get_started_button "bot_start_payload"
@@ -12,7 +12,7 @@ class BotLogic < BaseBotLogic
 
 	def self.bot_logic
 
-		ENV["DOMAIN_NAME"] = "https://a27d512c.ngrok.io"
+		ENV["DOMAIN_NAME"] = "https://f6d7f78a.ngrok.io"
 
 		if @request_type == "CALLBACK"
       		case @fb_params.payload
@@ -41,14 +41,14 @@ class BotLogic < BaseBotLogic
 		if stop_id.match(/gr{1,}a{1,}ci{1,}a{1,}s{1,}|gra{1,}zie{1,}|thank|thx|thnks/i)
 			reply_message ":smiley_cat: No hay de que! Aquí estoy cuando quieras. Miau!"
 		elsif stop_id.match(/ho{1,}la{1,}|o{1,}la{1,}|he{1,}llo{1,}/i)
-			reply_message ":heart_eyes_cat: Hola hola! Código de parada por favor. Miau!"
+			reply_message [":heart_eyes_cat: Hola hola! Código de parada por favor. Miau!", ":smiley_cat: Hellou! Tienes un código de parada para mi?"].sample
 		else stop_id = get_message.gsub(/[^0-9]/,"")
 			if stop_id != ""
 				response = get_emt_data(stop_id)
 				if response['errorCode'] != "-1"
 					@current_user.profile = {stop_id: stop_id}
 					@current_user.profile = {response: response}
-					reply_message  "Lo tengo! :smiley_cat: Parada #{stop_id} - #{@current_user.profile[:response]['stop']['direction']}"
+					reply_message  ["Lo tengo! :smiley_cat: Parada #{stop_id} - #{@current_user.profile[:response]['stop']['direction']}", "Genial! :smiley_cat: Parada #{stop_id} - #{@current_user.profile[:response]['stop']['direction']}"].sample
 					@bus_lines = get_lines(response)
 					reply_quick_reply "Tengo datos de estos buses!", @bus_lines
 					state_go

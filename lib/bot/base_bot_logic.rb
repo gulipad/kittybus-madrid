@@ -1,5 +1,6 @@
 require 'mechanize'
 require 'spintax_parser'
+require 'openssl'
 
 class String
   include SpintaxParser
@@ -7,20 +8,48 @@ end
 
 class BaseBotLogic
 
+  def self.get_profile(user_id)
+    response = HTTParty.get("https://graph.facebook.com/v2.6/#{user_id}?fields=first_name,last_name,profile_pic,locale,timezone,gender&access_token=#{Settings.page_access_token}")
+    JSON.parse(response.body)
+  end
+
+  def self.bot_logic
+    reply_message "NOT IMPLEMENTED"
+  end
+
+  def self.get_fb_params
+    @fb_params
+  end
+
+  def self.get_request_type
+    @request_type
+  end
+
+  def self.get_current_user
+    @current_user
+  end
+
+  def self.get_msg_meta
+    @msg_meta
+  end
+
+  def self.get_state_handled
+    @state_handled
+  end
+
   def self.send_message(msg, recipient, options={})
     options.merge({recipient: recipient})
     reply_message(msg, options)
   end
 
   def self.reply_message(msg, options={})
-
     options = {
       resolve_emoji: true,
       spintax: true,
-      recipient: @fb_params.sender
+      recipient: {id: @current_user.fb_id}
     }.merge(options)
 
-    if @request_type == "TEXT" or @request_type == "CALLBACK"
+    if @request_type == "TEXT" or @request_type == "CALLBACK"  or @request_type == "LOCATION"
 
       if(options[:resolve_emoji])
         msg = compute_emojis(msg)
@@ -42,7 +71,7 @@ class BaseBotLogic
   def self.reply_image(img_url)
     if @request_type == "TEXT" or @request_type == "CALLBACK"
       Bot.deliver(
-        recipient: @fb_params.sender,
+        recipient: {id: @current_user.fb_id},
         message: {
           attachment: {
             type: 'image',
@@ -70,9 +99,9 @@ class BaseBotLogic
 
   def self.reply_quick_buttons(msg, options)
     options ||= %W(Yes No)
-    if @request_type == "TEXT" or @request_type == "CALLBACK"
+    if @request_type == "TEXT" or @request_type == "CALLBACK" or @request_type == "LOCATION"
       Bot.deliver(
-        recipient: @fb_params.sender,
+        recipient: {id: @current_user.fb_id},
         message: {
           text: msg,
           quick_replies: options.map { |option| {content_type: 'text', title: option, payload: "QUICK_#{option.upcase}"} }
@@ -80,6 +109,22 @@ class BaseBotLogic
       )
     end
   end
+
+  def self.reply_location_button(msg)
+    if @request_type == "TEXT" or @request_type == "CALLBACK"
+      Bot.deliver(
+        recipient: {id: @current_user.fb_id},
+        message:{
+          "text": msg,
+          "quick_replies":[
+            {
+              "content_type":"location",
+            }
+          ]
+        }
+      )
+    end  
+end
 
   def self.reply_html(html)
     if @request_type == "TEXT" or @request_type == "CALLBACK"
@@ -91,7 +136,7 @@ class BaseBotLogic
     end
   end
 
-  #TODO: maje it useful
+  #TODO: make it useful
   def self.reply_button
     if @request_type == "TEXT" or @request_type == "CALLBACK"
 
@@ -160,8 +205,6 @@ class BaseBotLogic
 
 
   def self.handle_user
-
-    #binding.pry
     user_id = @fb_params.sender["id"].to_i
     user = User.find_by_fb_id user_id
 
@@ -170,14 +213,15 @@ class BaseBotLogic
       user.fb_id = user_id
       user.state_machine = 0
       user.last_message_received = Time.now
+      user.profile = get_profile(user_id)
     end
 
     if @request_type == "TEXT" or @request_type == "CALLBACK"
 
       # reset statemachine if longer ago than 5 minutes
-      if Time.now - user.last_message_received > (60 * 5)
+      if Settings.state_machine_reset_to > 0 and  Time.now - user.last_message_received > (60 * 5)
         @current_user = user
-        state_reset
+        state_reset        
       end
 
       user.last_message_received = Time.now
@@ -199,17 +243,17 @@ class BaseBotLogic
     #handle different attachments the user could send
     if type == "TEXT"
       if !fb_params.messaging["message"]["attachments"].nil?
-        attachment_type = fb_params.messaging["message"]["attachments"][0]["type"] #so wrong lol
+        attachment_type = fb_params.messaging["message"]["attachments"][0]["type"]
 
         if attachment_type == "location"
           @request_type = "LOCATION"
           @msg_meta = fb_params.messaging["message"]["attachments"][0]["payload"]
         elsif attachment_type == "image"
           @request_type = "IMAGE"
-          @msg_meta = fb_params.messaging["message"]["attachments"][0]["payload"]
+          @msg_meta = fb_params.messaging["message"]["attachments"][0]["payload"]["url"]
         elsif attachment_type == "audio"
           @request_type = "AUDIO"
-          @msg_meta = fb_params.messaging["message"]["attachments"][0]["payload"]
+          @msg_meta = fb_params.messaging["message"]["attachments"][0]["payload"]["url"]
         elsif attachment_type == "fallback"
           @request_type = "ATTACHMENT_UNKNOWN"
           @msg_meta = fb_params.messaging["message"]["attachments"][0]["payload"]
@@ -222,12 +266,14 @@ class BaseBotLogic
     bot_logic
 
     rescue Exception => e
-     puts e
+      puts e.message
+      puts e.backtrace.join("\n")
   end
 
   def self.api_ai
     client = ApiAiRuby::Client.new(:client_access_token => '1ba3cc5b1fa0435589b75483343622d5')
   end
+
   ##EMT Madrid Module
   def self.get_emt_data(stopId)
     url = "https://openbus.emtmadrid.es:9443/emt-proxy-server/last/media/GetEstimatesIncident.php"
@@ -397,12 +443,12 @@ class BaseBotLogic
   end
 
   def self.parse_emojis(content)
-    EmojiParser.tokenize()
+    EmojiParser.tokenize(content)
   end
 
   ## State Machine Module
   def self.state_action(required_state, action)
-    if @request_type == "TEXT" or @request_type == "CALLBACK"
+    if @request_type == "TEXT" or @request_type == "CALLBACK" or @request_type == "LOCATION"
       if @state_handled == false and @current_user.state_machine == required_state
         self.send(action)
         @state_handled = true
@@ -417,7 +463,7 @@ class BaseBotLogic
       @current_user.state_machine = state
     end
 
-    puts "going state: " + @current_user.state_machine.to_s
+    #puts "going state: " + @current_user.state_machine.to_s
 
     @current_user.save!
   end
@@ -480,8 +526,62 @@ class BaseBotLogic
    #--> self.ask_questions
    #--> self.compute_answer
 
+  ## webview Module
+
+  def self.generate_webview_token(user_id)
+    OpenSSL::HMAC.hexdigest('sha1'.freeze, 
+                            Rails.application.secrets.secret_key_base,
+                            user_id)
+  end
+
+
+  def self.send_webview_button(webview, text='Webview Message Text', button_text='Open Webview')
+    params = {
+        token: generate_webview_token(@fb_params.sender["id"]),
+        user_id: @fb_params.sender["id"]
+      }.to_query
+
+    url = ENV["DOMAIN_NAME"] + "/" + webview + "?" + params
+
+    puts url
+  
+    Bot.deliver(
+        recipient: @fb_params.sender,
+        message: {
+          attachment: {
+            type: 'template',
+            payload: {
+              template_type: 'button',
+              text: text,
+              buttons: [
+                { 
+                  type: 'web_url',
+                  title: button_text,
+                  url: url,
+                  webview_height_ratio: "compact", #compact, tall, full 
+                  messenger_extensions: true,  
+                  fallback_url: url
+                }
+              ]
+            }
+          }
+        }
+      )
+
+
+  end
+
 
   ## Setup Module
+
+
+  def self.set_domain_whitelist
+    Facebook::Messenger::Thread.set(
+      setting_type: "domain_whitelisting",
+      whitelisted_domains: [ ENV["DOMAIN_NAME"] ],
+      domain_action_type: "add"
+    )
+  end
 
   def self.set_welcome_message(message)
     Facebook::Messenger::Thread.set(
@@ -510,6 +610,25 @@ class BaseBotLogic
       thread_state: 'existing_thread',
       call_to_actions: options.map { |option| {type: 'postback', title: option, payload: "#{option.upcase}_BOT"} }
     )
+  end
+
+  def self.got_bot_menu?(option)
+    @request_type == "CALLBACK" and @fb_params.payload == "#{option.upcase}_BOT"
+  end
+
+  #geo utils
+  def self.get_address_from_latlng
+    #https://console.developers.google.com/flows/enableapi?apiid=geolocation&keyType=SERVER_SIDE&reusekey=true
+    response = HTTParty.get("https://maps.googleapis.com/maps/api/geocode/json?latlng=#{@msg_meta["coordinates"]["lat"]},#{@msg_meta["coordinates"]["long"]}&key=#{Settings.googlegeo_api_key}")
+    address_infos = JSON.parse(response.body)
+    address_infos["results"][0]["formatted_address"]
+  end
+
+  def self.get_weather_from_latlng
+    response = HTTParty.get("http://api.openweathermap.org/data/2.5/weather?units=metric&lat=#{@msg_meta["coordinates"]["lat"]}&lon=#{@msg_meta["coordinates"]["long"]}&appid=#{Settings.openweathermap_api_key}")
+    weather_infos = JSON.parse(response.body)
+    puts weather_infos
+    weather_infos["main"]
   end
 
 end

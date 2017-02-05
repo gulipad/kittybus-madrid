@@ -23,7 +23,6 @@ gem 'spintax_parser'
 gem 'wkhtmltoimage-binary'
 gem 'imgkit'
 gem 'mechanize'
-gem 'messenger-ruby'
 
 gem 'facebook-messenger'
 gem 'rb-readline'
@@ -55,6 +54,8 @@ group :development, :test do
   # Call 'byebug' anywhere in the code to stop execution and get a debugger console
   gem 'pry'
   gem 'sqlite3'
+  gem 'rspec-rails', '~> 3.5'
+  gem 'webmock'
 end
 
 group :development do

@@ -7,6 +7,8 @@ class String
 end
 
 class BaseBotLogic
+  # Initialize API AI client
+  @@client = ApiAiRuby::Client.new(:client_access_token => '1ba3cc5b1fa0435589b75483343622d5')
 
   def self.get_profile(user_id)
     response = HTTParty.get("https://graph.facebook.com/v2.6/#{user_id}?fields=first_name,last_name,profile_pic,locale,timezone,gender&access_token=#{Settings.page_access_token}")
@@ -40,6 +42,13 @@ class BaseBotLogic
   def self.send_message(msg, recipient, options={})
     options.merge({recipient: recipient})
     reply_message(msg, options)
+  end
+
+  def self.typing_indicator
+    Bot.deliver(
+        recipient: {id: @current_user.fb_id},
+        sender_action: "typing_on"
+        )
   end
 
   def self.reply_message(msg, options={})
@@ -232,7 +241,6 @@ end
   end
 
   def self.handle_request(fb_params, type="TEXT")
-
     @fb_params = fb_params
     @request_type = type
     @current_user = handle_user
@@ -270,11 +278,12 @@ end
       puts e.backtrace.join("\n")
   end
 
-  def self.api_ai
-    client = ApiAiRuby::Client.new(:client_access_token => '1ba3cc5b1fa0435589b75483343622d5')
+  # API AI Module
+  def self.ai_response(user_says)
+    response = @@client.text_request user_says
   end
 
-  ##EMT Madrid Module
+  # EMT Madrid Module
   def self.get_emt_data(stopId)
     url = "https://openbus.emtmadrid.es:9443/emt-proxy-server/last/media/GetEstimatesIncident.php"
     idClient = "WEB.SERV.ignaciomorenopubul@gmail.com"
@@ -289,10 +298,10 @@ end
 
     response = HTTParty.post(url, :body => request, :headers => {"Content-Type" => "application/x-www-form-urlencoded"}) 
     response = JSON.parse(response.body)
+    puts response
     if response[:errorCode] != "-1"
       return response
     end
-    puts response
     isArray = response['arrives']['arriveEstimationList']['arrive'].kind_of?(Array)
     if !isArray
       response['arrives']['arriveEstimationList']['arrive']= [response['arrives']['arriveEstimationList']['arrive']]
@@ -301,12 +310,17 @@ end
   end
 
   def self.get_lines(response)
-      bus_list = response['arrives']['arriveEstimationList']['arrive']
+    bus_list = response['arrives']['arriveEstimationList']['arrive']
+    puts bus_list
+    if bus_list.kind_of?(Array)
       bus_line_conductor = bus_list.map do |item|
         item['lineId']
       end
       bus_lines_available = bus_line_conductor.uniq
- 
+    else 
+      bus_lines_available = bus_list["lineId"]
+    end
+    bus_lines_available
   end
 
   def self.get_times(bus_id)
@@ -343,8 +357,19 @@ end
     puts times
     times
   end
-  ## websearch MODULE
 
+  def self.get_close_stops(lat, lng, radius)
+    url = "https://servicios.emtmadrid.es:8443/geo/servicegeo.asmx?op=getStopsFromXY"
+    idClient = "WEB.SERV.ignaciomorenopubul@gmail.com"
+    passKey = "20A8A37A-5D64-4EF7-9D79-B8F85CCD9EA6"
+    response = HTTParty.get("https://servicios.emtmadrid.es:8443/geo/ServiceGEO.asmx/getStopsFromXY?idClient=#{idClient}&passKey=#{passKey}&coordinateX=#{lng}&coordinateY=#{lat}&Radius=#{radius}&statistics=&cultureInfo=")
+    puts response["Output"]["Stop"]
+    stop_array = response["Output"]["Stop"].map do |item|
+        item['IdStop']
+      end
+  end
+
+  ## websearch MODULE
   def self.search_request_on_website(options)
     options = {
       form_name: 'searchform',

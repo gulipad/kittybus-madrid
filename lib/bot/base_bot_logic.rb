@@ -296,17 +296,17 @@ end
         :Text_StopRequired_YN => "Y",
         }
 
-    response = HTTParty.post(url, :body => request, :headers => {"Content-Type" => "application/x-www-form-urlencoded"}) 
-    response = JSON.parse(response.body)
-    puts response
-    if response[:errorCode] != "-1"
-      return response
+    @emt_response = HTTParty.post(url, :body => request, :headers => {"Content-Type" => "application/x-www-form-urlencoded"}) 
+    @emt_response = JSON.parse(@emt_response.body)
+    puts @emt_response
+    if @emt_response[:errorCode] != "-1"
+      return @emt_response
     end
-    isArray = response['arrives']['arriveEstimationList']['arrive'].kind_of?(Array)
+    isArray = @emt_response['arrives']['arriveEstimationList']['arrive'].kind_of?(Array)
     if !isArray
-      response['arrives']['arriveEstimationList']['arrive']= [response['arrives']['arriveEstimationList']['arrive']]
+      @emt_response['arrives']['arriveEstimationList']['arrive']= [@emt_response['arrives']['arriveEstimationList']['arrive']]
     end
-    response
+    @emt_response
   end
 
   def self.get_lines(response)
@@ -324,7 +324,7 @@ end
   end
 
   def self.get_times(bus_id)
-    response =  @current_user.profile[:response]
+    response =  @emt_response
     bus_list = response['arrives']['arriveEstimationList']['arrive']
     bus_line_conductor = bus_list.map do |item|
       item['lineId']
@@ -533,23 +533,6 @@ end
     notification = Notification.where user_id: user_id, :order => "ssid"
     notification.first
   end
-   #--> self.offer_subscription
-   #--> self.handle_subscription_response
-
-  ## User Roulette Module
-   #--> self.roulette_message
-   #--> self.handle_roulette_messege_response
-
-  ## Browser Module
-   #--> self.
-   #--> self.
-
-  ## CSV Lookup Module
-   #--> Google Spreadsheet Lookup Module
-
-  ## Question Module
-   #--> self.ask_questions
-   #--> self.compute_answer
 
   ## webview Module
 
@@ -647,6 +630,12 @@ end
     response = HTTParty.get("https://maps.googleapis.com/maps/api/geocode/json?latlng=#{@msg_meta["coordinates"]["lat"]},#{@msg_meta["coordinates"]["long"]}&key=#{Settings.googlegeo_api_key}")
     address_infos = JSON.parse(response.body)
     address_infos["results"][0]["formatted_address"]
+  end
+
+  def self.get_latlng_from_address(address)
+    response = HTTParty.get("https://maps.googleapis.com/maps/api/geocode/json?language=es&address=#{address}&bounds=40.220903, -4.051226|40.679764, -3.202067&key=#{Settings.googlegeo_api_key}")
+    location_infos = JSON.parse(response.body)
+    {geometry: location_infos["results"][0]["geometry"]["location"], address: location_infos["results"][0]["formatted_address"]}
   end
 
   def self.get_weather_from_latlng

@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20170206191846) do
+ActiveRecord::Schema.define(version: 20170218150237) do
 
   create_table "blackllists", force: :cascade do |t|
     t.integer  "user_id"
@@ -22,7 +22,7 @@ ActiveRecord::Schema.define(version: 20170206191846) do
 
   create_table "favorites", force: :cascade do |t|
     t.integer  "user_id"
-    t.integer  "stopId"
+    t.string   "stop_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
   end

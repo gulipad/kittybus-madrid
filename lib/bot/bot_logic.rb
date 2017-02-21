@@ -112,8 +112,13 @@ class BotLogic < BaseBotLogic
 		if @request_type == "LOCATION"
 			radius = 200
 			close_stops = get_close_stops(radius)
-			reply_quick_buttons "Aquí tienes #{@first_name}! Las paradas a un radio de 200 metros de tu posición. Miau!", close_stops
-			state_go 1
+			if !close_stops 
+				reply_message "Sorry #{@first_name}, no tienes paradas a menos de 200 metros a la redonda. :crying_cat_face:"
+				state_go 1
+			else
+				reply_quick_buttons "Aquí tienes #{@first_name}! Las paradas a un radio de 200 metros de tu posición. Miau!", close_stops
+				state_go 1	
+			end		
 		else
 			reply_message "No he captado tu ubicación, si quieres ver paradas a tu alrededor, pídemelo de nuevo! :smiley_cat:. "
 			state_go 1

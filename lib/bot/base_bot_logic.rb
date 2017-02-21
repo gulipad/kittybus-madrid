@@ -369,11 +369,14 @@ end
     url = "https://servicios.emtmadrid.es:8443/geo/servicegeo.asmx?op=getStopsFromXY"
     idClient = ENV["ID_CLIENT_EMT"]
     passKey = ENV["PASSKEY_EMT"]
-    puts @msg_meta
     lat =  @msg_meta["coordinates"]["lat"]
     lng = @msg_meta["coordinates"]["long"]
     response = HTTParty.get("https://servicios.emtmadrid.es:8443/geo/ServiceGEO.asmx/getStopsFromXY?idClient=#{idClient}&passKey=#{passKey}&coordinateX=#{lng}&coordinateY=#{lat}&Radius=#{radius}&statistics=&cultureInfo=")
+    puts '#########'
     puts response["Output"]["Stop"]
+    if !response["Output"]["Stop"]  
+      return nil
+    end
     stop_array = response["Output"]["Stop"].map do |item|
         item['IdStop']
       end

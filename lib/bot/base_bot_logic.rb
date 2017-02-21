@@ -385,6 +385,9 @@ end
   def self.get_route_url(destination_address)
     start_address = get_address_from_latlng
     destination_address = get_address_from_address(destination_address)
+    if destination_address == nil
+      return nil
+    end
     puts destination_address
     url = "https://www.google.com/maps?saddr=#{start_address}&daddr=#{destination_address}&ie=UTF8&f=d&sort=def&dirflg=rB&hl=es".gsub(" ", "%20")
   end
@@ -721,11 +724,15 @@ end
     response = HTTParty.get("https://maps.googleapis.com/maps/api/geocode/json?latlng=#{@msg_meta["coordinates"]["lat"]},#{@msg_meta["coordinates"]["long"]}&key=#{ENV["GEOCODING_API"]}")
     address_infos = JSON.parse(response.body)
     address_infos["results"][0]["formatted_address"]
+
   end
 
   def self.get_address_from_address(address)
     response = HTTParty.get("https://maps.googleapis.com/maps/api/geocode/json?language=es&address=#{address}&bounds=40.220903, -4.051226|40.679764, -3.202067&key=#{ENV["GEOCODING_API"]}")
     location_infos = JSON.parse(response.body)
+    if !location_infos["results"][0]
+      return nil
+    end
     location_infos["results"][0]["formatted_address"]
   end
 

@@ -131,8 +131,13 @@ class BotLogic < BaseBotLogic
 		if @request_type == "LOCATION"
 			if @destination_address != ""
 				route_url = get_route_url(@destination_address)
-				send_basic_webview_button route_url, 'Aquí tienes tu camino! Cortesía de Google', 'Ver ruta'
-				state_go 1
+				if !route_url
+					reply_message "Oye, me he liado. No encuentro la dirección de destino. :crying_cat_face:"
+					state_go 1
+				else
+					send_basic_webview_button route_url, 'Aquí tienes tu camino! Cortesía de Google', 'Ver ruta'
+					state_go 1
+				end
 			else
 				reply_message "Lo siento #{@first_name}, no he captado dirección de destino. Todavía no se me dan muy bien los sitios, sólo direcciones. Volvamos a empezar. :smiley_cat:"
 				state_go 1

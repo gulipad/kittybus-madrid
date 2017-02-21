@@ -51,6 +51,13 @@ class BaseBotLogic
         )
   end
 
+   def self.typing_off
+    Bot.deliver(
+        recipient: {id: @current_user.fb_id},
+        sender_action: "typing_off"
+        )
+  end
+
   def self.reply_message(msg, options={})
     options = {
       resolve_emoji: true,

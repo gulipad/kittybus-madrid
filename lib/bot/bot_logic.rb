@@ -47,6 +47,7 @@ class BotLogic < BaseBotLogic
 
 	def self.convo_root
 		@stop_id = get_message
+		typing_indicator
 		ai_response = ai_response(@stop_id)
 		if @stop_id[/GUARDAR {0,5}/]
 			stop_id = @stop_id.gsub('GUARDAR ', '')
@@ -76,15 +77,16 @@ class BotLogic < BaseBotLogic
 			state_go 3
 		else @stop_id = get_message.gsub(/[^0-9]/,"")
 			process_stop
-		end		
+		end	
+		typing_off	
 	end
 
 
 	def self.get_bus_times
+		typing_indicator
 		regexp = get_message[/(n|m|t|h|e|c)\d{1,}|\d{1,}|(\s|^)(U|H|F|G|A)(\s|$)/i]
 		bus_id = (regexp) ? regexp.strip : ""
 		if bus_id != ""	
-			typing_indicator
 			times = get_times(bus_id)
 			if times != "not_included"
 				if times.length == 1
@@ -102,11 +104,12 @@ class BotLogic < BaseBotLogic
 		else 
 			reply_message "No he entendido eso. Necesito una línea de bus. :cat:"
 		end
+		typing_off
 	end
 
 	def self.handle_location
+		typing_indicator
 		if @request_type == "LOCATION"
-			typing_indicator
 			radius = 200
 			close_stops = get_close_stops(radius)
 			reply_quick_buttons "Aquí tienes #{@first_name}! Las paradas a un radio de 200 metros de tu posición. Miau!", close_stops
@@ -115,11 +118,12 @@ class BotLogic < BaseBotLogic
 			reply_message "No he captado tu ubicación, si quieres ver paradas a tu alrededor, pídemelo de nuevo! :smiley_cat:. "
 			state_go 1
 		end
+		typing_off
 	end
 
 	def self.handle_route
+		typing_indicator
 		if @request_type == "LOCATION"
-			typing_indicator
 			if @destination_address != ""
 				route_url = get_route_url(@destination_address)
 				send_basic_webview_button route_url, 'Aquí tienes tu camino! Cortesía de Google', 'Ver ruta'
@@ -132,11 +136,13 @@ class BotLogic < BaseBotLogic
 			reply_message "No he captado tu ubicación, ahora mismo solo se decirte rutas desde donde estés. Volvamos a empezar :smiley_cat:"
 			state_go 1
 		end
+		typing_off
 	end
 
 	## Support functions
 
 	def self.handle_favorites(entities)
+		typing_indicator
 		if entities[:save] == '' && entities[:see] == ''
 			reply_message 'Para guardar una parada a favoritos, pon GUARDAR seguido del código de parada. Por ejemplo GUARDAR 123 :smiley_cat:'
 			reply_message 'Para ver tus favoritos, sólo tienes que pedirmelo! Miau! :heart_eyes_cat:'
@@ -145,7 +151,6 @@ class BotLogic < BaseBotLogic
 		elsif entities[:see] != ''
 
 			if Favorite.where(user_id: @current_user.id).first()
-				typing_indicator
 				reply_quick_buttons "Aquí tienes #{@first_name}! Tus paradas favoritas. Miau!", Favorite.where(user_id: @current_user.id).pluck(:stop_id) 
 			else
 				typing_indicator
@@ -153,45 +158,56 @@ class BotLogic < BaseBotLogic
 				reply_message 'Para guardar una parada a favoritos, pon GUARDAR seguido del código de parada. Por ejemplo GUARDAR 123 :smiley_cat:'
 			end
 		end
+		typing_off
 	end
 
 	def self.save_location(stop_id)
+		typing_indicator
 		Favorite.create(user_id: @current_user.id, stop_id: stop_id)
 		reply_message 'Hecho! :smiley_cat:'
 		reply_message "Recuerda que puedes borrarla escribiendo BORRAR #{stop_id}"
+		typing_off
 	end
 
 	def self.reject_save_location
+		typing_indicator
 		reply_message 'Sorry, esa parada ya la tienes guardada :smiley_cat:'
 		reply_message 'Para ver tus favoritos, sólo tienes que pedirmelo! Miau! :heart_eyes_cat:'
+		typing_off
 	end
 
 	def self.delete_location(stop_id)
+		typing_indicator
 		reply_message "Ok, #{@first_name}! Parada borrada :smiley_cat:"
+		typing_off
 	end
 
 	def self.reject_delete_location
+		typing_indicator
 		reply_message 'Ooops, esta parada no está en tus favoritos :smiley_cat:'
 		reply_message 'Para ver tus favoritos, sólo tienes que pedirmelo! Miau! :heart_eyes_cat:'
+		typing_off
 	end
 
 	def self.process_stop
+		typing_indicator
 		if @stop_id != ""
-				typing_indicator
-				response = get_emt_data(@stop_id)
-				if response['errorCode'] != "-1"
-					@current_user.profile = {stop_id: @stop_id}
-					reply_message  ["Lo tengo! :smiley_cat: Parada #{@stop_id} - #{response['stop']['direction']}", "Genial! :smiley_cat: Parada #{@stop_id} - #{response['stop']['direction']}"].sample
-					@bus_lines = get_lines(response)
-					reply_quick_reply "Tengo datos de estos buses!", @bus_lines
-					puts @bus_lines
-					state_go
-				else 
-					reply_message ":cat: Oooops. No tengo datos de esta parada. Es posible que no haya autobuses a esta hora.:crying_cat_face:"
-				end	
-			else
-				reply_message ":cat: Creo que me he perdido (soy un poco tonto a veces :crying_cat_face:). Recuerda que puedes escribir AYUDA en cualquier momento!"
-			end
+			typing_indicator
+			response = get_emt_data(@stop_id)
+			if response['errorCode'] != "-1"
+				@current_user.profile = {stop_id: @stop_id}
+				reply_message  ["Lo tengo! :smiley_cat: Parada #{@stop_id} - #{response['stop']['direction']}", "Genial! :smiley_cat: Parada #{@stop_id} - #{response['stop']['direction']}"].sample
+				@bus_lines = get_lines(response)
+				reply_quick_reply "Tengo datos de estos buses!", @bus_lines
+				puts @bus_lines
+				state_go
+			else 
+				reply_message ":cat: Oooops. No tengo datos de esta parada. Es posible que no haya autobuses a esta hora.:crying_cat_face:"
+			end	
+		else
+			reply_message ":cat: Creo que me he perdido (soy un poco tonto a veces :crying_cat_face:). Recuerda que puedes escribir AYUDA en cualquier momento!"
+		end
+		typing_off
 	end
 
 	def self.list_instructions
@@ -203,6 +219,7 @@ class BotLogic < BaseBotLogic
 		reply_message "Si me dices 'quiero ir a...' o 'cómo se va a...' o algo así, te ayudo a encontrar tu camino!:heart_eyes_cat:"
 		reply_message "Si quieres guardar paradas en tus favoritos, dime GUARDAR y el código de parada. (i.e. GUARDAR 123)."
 		reply_message "Y eso es todo amigos! Miau! :smiley_cat:"
+		typing_off
 	end
 
 	## End support functions

@@ -57,27 +57,21 @@ class BotLogic < BaseBotLogic
 		elsif @stop_id == 'AYUDA'
 			list_instructions
 		elsif ai_response[:result][:metadata][:intentName] == 'getRoute'
-			typing_indicator
 			@destination_address = ai_response[:result][:parameters][:address]
 			reply_location_button("Para eso necesito tu ubicación")
 			state_go 4
 		elsif ai_response[:result][:metadata][:intentName] == 'thanks'
-			typing_indicator
 			reply_message ":smiley_cat: No hay de que! Aquí estoy cuando quieras. Miau!"
 		elsif ai_response[:result][:metadata][:intentName] == 'greeting'
-			typing_indicator
 			ai_reply = sprintf(ai_response[:result][:fulfillment][:speech].to_s, @first_name)
 			reply_message ai_reply
 		elsif ai_response[:result][:metadata][:intentName] == 'insultDefense'
-			typing_indicator
 			ai_reply = sprintf(ai_response[:result][:fulfillment][:speech].to_s, @first_name)
 			reply_image ['http://i.giphy.com/l3q2SaisWTeZnV9wk.gif', 'http://i.giphy.com/3rg3vxFMGGymk.gif'].sample
 			reply_message ai_response[:result][:fulfillment][:speech]
 		elsif ai_response[:result][:metadata][:intentName] == 'favorites'
-			typing_indicator
 			handle_favorites(ai_response[:result][:parameters])
 		elsif ai_response[:result][:metadata][:intentName] == 'locationRequest'
-			typing_indicator
 			reply_location_button("Para eso necesito tu ubicación")
 			state_go 3
 		else @stop_id = get_message.gsub(/[^0-9]/,"")

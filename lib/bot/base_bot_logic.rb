@@ -8,7 +8,7 @@ end
 
 class BaseBotLogic
   # Initialize API AI client
-  @@client = ApiAiRuby::Client.new(:client_access_token => '1ba3cc5b1fa0435589b75483343622d5')
+  @@client = ApiAiRuby::Client.new(:client_access_token => ENV["API_AI_TOKEN"])
 
   def self.get_profile(user_id)
     response = HTTParty.get("https://graph.facebook.com/v2.6/#{user_id}?fields=first_name,last_name,profile_pic,locale,timezone,gender&access_token=#{Settings.page_access_token}")
@@ -286,8 +286,8 @@ end
   # EMT Madrid Module
   def self.get_emt_data(stopId)
     url = "https://openbus.emtmadrid.es:9443/emt-proxy-server/last/media/GetEstimatesIncident.php"
-    idClient = "WEB.SERV.ignaciomorenopubul@gmail.com"
-    passKey = "20A8A37A-5D64-4EF7-9D79-B8F85CCD9EA6"
+    idClient = ENV["ID_CLIENT_EMT"]
+    passKey = ENV["PASSKEY_EMT"]
     request = {
         :idClient => idClient,
         :passKey => passKey,
@@ -360,8 +360,8 @@ end
 
   def self.get_close_stops(radius)
     url = "https://servicios.emtmadrid.es:8443/geo/servicegeo.asmx?op=getStopsFromXY"
-    idClient = "WEB.SERV.ignaciomorenopubul@gmail.com"
-    passKey = "20A8A37A-5D64-4EF7-9D79-B8F85CCD9EA6"
+    idClient = ENV["ID_CLIENT_EMT"]
+    passKey = ENV["PASSKEY_EMT"]
     puts @msg_meta
     lat =  @msg_meta["coordinates"]["lat"]
     lng = @msg_meta["coordinates"]["long"]
@@ -398,8 +398,6 @@ end
 
   # def self.get_route
   #   url = "https://openbus.emtmadrid.es:9443/emt-proxy-server/last/media/GetStreetRoute.php"
-  #   idClient = "WEB.SERV.ignaciomorenopubul@gmail.com"
-  #   passKey = "20A8A37A-5D64-4EF7-9D79-B8F85CCD9EA6"
   #   request = {
   #       :idClient => idClient,
   #       :passKey => passKey,
@@ -420,7 +418,7 @@ end
   #       :generarAudio => nil,
   #       }
 
-  #   #@emt_route = HTTParty.get("https://servicios.emtmadrid.es:8443/servicemedia/servicemedia.asmx/GetStreetRoute?idClient=WEB.SERV.ignaciomorenopubul@gmail.com&passKey=20A8A37A-5D64-4EF7-9D79-B8F85CCD9EA6&coordinateXFrom=-3.703740&coordinateYFrom=40.446824&coordinateXTo=-3.713053&coordinateYTo=40.431783&statistics=&cultureInfo=&originName=&destinationName=&criteriaSelection=11&day=&month=&year=&hour=&minute=&generarAudio=") 
+  #   #@emt_route = HTTParty.get("https://servicios.emtmadrid.es:8443/servicemedia/servicemedia.asmx/GetStreetRoute?idClient=WEB.SERV.@gmail.com&passKey=$$$$$$-$$$$-$$$$-$$$$$-$$$$$&coordinateXFrom=-3.703740&coordinateYFrom=40.446824&coordinateXTo=-3.713053&coordinateYTo=40.431783&statistics=&cultureInfo=&originName=&destinationName=&criteriaSelection=11&day=&month=&year=&hour=&minute=&generarAudio=") 
   #   #@emt_route = HTTParty.post(url, :body => request, :headers => {"Content-Type" => "application/x-www-form-urlencoded"}) 
   #   @emt_route = 'ok'
   #   puts @emt_route
@@ -710,13 +708,13 @@ end
   #geo utils
   def self.get_address_from_latlng
     #https://console.developers.google.com/flows/enableapi?apiid=geolocation&keyType=SERVER_SIDE&reusekey=true
-    response = HTTParty.get("https://maps.googleapis.com/maps/api/geocode/json?latlng=#{@msg_meta["coordinates"]["lat"]},#{@msg_meta["coordinates"]["long"]}&key=#{Settings.geocoding_api_key}")
+    response = HTTParty.get("https://maps.googleapis.com/maps/api/geocode/json?latlng=#{@msg_meta["coordinates"]["lat"]},#{@msg_meta["coordinates"]["long"]}&key=#{ENV["GEOCODING_API"]}")
     address_infos = JSON.parse(response.body)
     address_infos["results"][0]["formatted_address"]
   end
 
   def self.get_address_from_address(address)
-    response = HTTParty.get("https://maps.googleapis.com/maps/api/geocode/json?language=es&address=#{address}&bounds=40.220903, -4.051226|40.679764, -3.202067&key=#{Settings.geocoding_api_key}")
+    response = HTTParty.get("https://maps.googleapis.com/maps/api/geocode/json?language=es&address=#{address}&bounds=40.220903, -4.051226|40.679764, -3.202067&key=#{ENV["GEOCODING_API"]}")
     location_infos = JSON.parse(response.body)
     location_infos["results"][0]["formatted_address"]
   end

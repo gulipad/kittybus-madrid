@@ -12,7 +12,6 @@ class BotLogic < BaseBotLogic
 
 	def self.bot_logic
 
-		ENV["DOMAIN_NAME"] = "https://a9b321d4.ngrok.io"
 		@first_name = get_profile(@current_user.fb_id)["first_name"]
 
 		if @request_type == "CALLBACK"

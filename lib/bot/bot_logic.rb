@@ -3,7 +3,7 @@ class BotLogic < BaseBotLogic
 	def self.setup
 		set_welcome_message "Hola, soy KittyBot! Te ayudo a saber cuánto le queda al bus en Madrid."
 		set_get_started_button "bot_start_payload"
-		set_bot_menu %W(Reset)
+		set_bot_menu %W(Reset Ayuda)
 	end
 
 	def self.cron
@@ -21,9 +21,15 @@ class BotLogic < BaseBotLogic
 	        		@current_user.delete
 	        		reply_message "Removed all your data from our servers."
         		return
+        		when "AYUDA_BOT"
+        			list_instructions
+        		return 
         		when "bot_start_payload"
-        		reply_message ":cat: Miau! Hola #{@first_name}! Soy KittyBus, te digo cuánto le queda al bus!"
+        		reply_message ":cat: Miau! Hola #{@first_name}! Yo soy KittyBus, te digo cuánto le queda al bus!"
         		reply_message "Puedes darme un código de parada, o preguntar por paradas cercanas cuando quieras!:heart_eyes_cat:"
+        		reply_message "Puedes guardar paradas en tus favoritos para que no se te olviden!"
+        		reply_message "También puedes preguntarme cómo llegar a cualquier sitio. :smiley_cat:"
+        		reply_message "Y por ultimooo...recuerda que si en cualquier momento tienes alguna duda, pudes escribir AYUDA así en mayúsculas y te digo todo lo que sé hacer. Miau! :smiley_cat:"
         		state_go 1
         		return
         		
@@ -33,6 +39,7 @@ class BotLogic < BaseBotLogic
 		state_action 1, :convo_root
 		state_action 2, :get_bus_times
 		state_action 3, :handle_location
+		state_action 4, :handle_route
 	end
 
 	def self.greet
@@ -48,7 +55,14 @@ class BotLogic < BaseBotLogic
 		elsif @stop_id[/BORRAR {0,5}/]
 			stop_id = @stop_id.gsub('BORRAR ', '')
 			User.find_by(id: @current_user.id).favorites.find_by(stop_id: stop_id) ? delete_location(stop_id) : reject_delete_location
-		elsif ai_response[:result][:metadata][:intentName] == 'thanks' 
+		elsif @stop_id == 'AYUDA'
+			list_instructions
+		elsif ai_response[:result][:metadata][:intentName] == 'getRoute'
+			typing_indicator
+			@destination_address = ai_response[:result][:parameters][:address]
+			reply_location_button("Para eso necesito tu ubicación")
+			state_go 4
+		elsif ai_response[:result][:metadata][:intentName] == 'thanks'
 			typing_indicator
 			reply_message ":smiley_cat: No hay de que! Aquí estoy cuando quieras. Miau!"
 		elsif ai_response[:result][:metadata][:intentName] == 'greeting'
@@ -65,7 +79,7 @@ class BotLogic < BaseBotLogic
 			handle_favorites(ai_response[:result][:parameters])
 		elsif ai_response[:result][:metadata][:intentName] == 'locationRequest'
 			typing_indicator
-			reply_location_button("Para eso necesito tu localización")
+			reply_location_button("Para eso necesito tu ubicación")
 			state_go 3
 		else @stop_id = get_message.gsub(/[^0-9]/,"")
 			process_stop
@@ -100,14 +114,29 @@ class BotLogic < BaseBotLogic
 	def self.handle_location
 		if @request_type == "LOCATION"
 			typing_indicator
-			lat =  @msg_meta["coordinates"]["lat"]
-			lng = @msg_meta["coordinates"]["long"]
 			radius = 200
-			close_stops = get_close_stops(lat, lng, radius)
+			close_stops = get_close_stops(radius)
 			reply_quick_buttons "Aquí tienes #{@first_name}! Las paradas a un radio de 200 metros de tu posición. Miau!", close_stops
 			state_go 1
 		else
-			reply_message "No he captado localización, volvamos a empezar :smiley_cat:. Me das una parada? "
+			reply_message "No he captado tu ubicación, si quieres ver paradas a tu alrededor, pídemelo de nuevo! :smiley_cat:. "
+			state_go 1
+		end
+	end
+
+	def self.handle_route
+		if @request_type == "LOCATION"
+			typing_indicator
+			if @destination_address != ""
+				route_url = get_route_url(@destination_address)
+				send_basic_webview_button route_url, 'Aquí tienes tu camino! Cortesía de Google', 'Ver ruta'
+				state_go 1
+			else
+				reply_message "Lo siento #{@first_name}, no he captado dirección de destino. Todavía no se me dan muy bien los sitios, sólo direcciones. Volvamos a empezar. :smiley_cat:"
+				state_go 1
+			end
+		else
+			reply_message "No he captado tu ubicación, ahora mismo solo se decirte rutas desde donde estés. Volvamos a empezar :smiley_cat:"
 			state_go 1
 		end
 	end
@@ -168,8 +197,19 @@ class BotLogic < BaseBotLogic
 					reply_message ":cat: Oooops. No tengo datos de esta parada. Es posible que no haya autobuses a esta hora.:crying_cat_face:"
 				end	
 			else
-				reply_message ":cat: Todavía necesito entrenarme, de momento sólo entiendo códigos de parada!"
+				reply_message ":cat: Creo que me he perdido (soy un poco tonto a veces :crying_cat_face:). Recuerda que puedes escribir AYUDA en cualquier momento!"
 			end
+	end
+
+	def self.list_instructions
+		typing_indicator
+		reply_message "Veo que tienes alguna duda, no te preocupes, estoy aquí para ayudar! :smiley_cat:"
+		reply_message "Esto es todo lo que sé hacer!"
+		reply_message "Si me das un código de parada, yo te digo que autobuses pasan por ahí y cuánto les queda para llegar! :smiley_cat:"
+		reply_message "Si me lo preguntas, te digo qué paradas tienes alrededor!"
+		reply_message "Si me dices 'quiero ir a...' o 'cómo se va a...' o algo así, te ayudo a encontrar tu camino!:heart_eyes_cat:"
+		reply_message "Si quieres guardar paradas en tus favoritos, dime GUARDAR y el código de parada. (i.e. GUARDAR 123)."
+		reply_message "Y eso es todo amigos! Miau! :smiley_cat:"
 	end
 
 	## End support functions

@@ -358,16 +358,75 @@ end
     times
   end
 
-  def self.get_close_stops(lat, lng, radius)
+  def self.get_close_stops(radius)
     url = "https://servicios.emtmadrid.es:8443/geo/servicegeo.asmx?op=getStopsFromXY"
     idClient = "WEB.SERV.ignaciomorenopubul@gmail.com"
     passKey = "20A8A37A-5D64-4EF7-9D79-B8F85CCD9EA6"
+    puts @msg_meta
+    lat =  @msg_meta["coordinates"]["lat"]
+    lng = @msg_meta["coordinates"]["long"]
     response = HTTParty.get("https://servicios.emtmadrid.es:8443/geo/ServiceGEO.asmx/getStopsFromXY?idClient=#{idClient}&passKey=#{passKey}&coordinateX=#{lng}&coordinateY=#{lat}&Radius=#{radius}&statistics=&cultureInfo=")
     puts response["Output"]["Stop"]
     stop_array = response["Output"]["Stop"].map do |item|
         item['IdStop']
       end
   end
+
+  def self.get_route_url(destination_address)
+    start_address = get_address_from_latlng
+    destination_address = get_address_from_address(destination_address)
+    puts destination_address
+    url = "https://www.google.com/maps?saddr=#{start_address}&daddr=#{destination_address}&ie=UTF8&f=d&sort=def&dirflg=rB&hl=es".gsub(" ", "%20")
+  end
+
+  # def self.get_route
+  #   google_route = HTTParty.get("https://maps.googleapis.com/maps/api/directions/json?language=es&origin=40.4448303,-3.7049905&destination=40.4316254,-3.7147&mode=transit&transit_mode=bus&key=#{Settings.geocoding_api_key}") 
+  #   google_route = JSON.parse(google_route.body)
+  #   if google_route["status"] == "OK"
+  #     google_route["routes"][0]["legs"][0]["steps"].each do |step|
+  #       if step["travel_mode"] == "TRANSIT"
+  #         @bus_info = step
+  #       end
+  #     end
+  #   else
+  #     return 'error'
+  #   end
+  #   puts @bus_info
+  #   @emt_route = 'ok'
+    
+  # end
+
+  # def self.get_route
+  #   url = "https://openbus.emtmadrid.es:9443/emt-proxy-server/last/media/GetStreetRoute.php"
+  #   idClient = "WEB.SERV.ignaciomorenopubul@gmail.com"
+  #   passKey = "20A8A37A-5D64-4EF7-9D79-B8F85CCD9EA6"
+  #   request = {
+  #       :idClient => idClient,
+  #       :passKey => passKey,
+  #       :coordinateXFrom  => "-3.703740",
+  #       :coordinateYFrom => "40.446824",
+  #       :coordinateXTo => "-3.713053",
+  #       :coordinateYTo => "40.431783",
+  #       :statistics => nil,
+  #       :cultureInfo => nil,
+  #       :originName => nil,
+  #       :destinationName => nil,
+  #       :criteriaSelection => "11",
+  #       :year => nil,
+  #       :day => nil,
+  #       :month => nil,
+  #       :hour => nil,
+  #       :minute => nil,
+  #       :generarAudio => nil,
+  #       }
+
+  #   #@emt_route = HTTParty.get("https://servicios.emtmadrid.es:8443/servicemedia/servicemedia.asmx/GetStreetRoute?idClient=WEB.SERV.ignaciomorenopubul@gmail.com&passKey=20A8A37A-5D64-4EF7-9D79-B8F85CCD9EA6&coordinateXFrom=-3.703740&coordinateYFrom=40.446824&coordinateXTo=-3.713053&coordinateYTo=40.431783&statistics=&cultureInfo=&originName=&destinationName=&criteriaSelection=11&day=&month=&year=&hour=&minute=&generarAudio=") 
+  #   #@emt_route = HTTParty.post(url, :body => request, :headers => {"Content-Type" => "application/x-www-form-urlencoded"}) 
+  #   @emt_route = 'ok'
+  #   puts @emt_route
+  #   @emt_route = 'ok'
+    
+  # end
 
   ## websearch MODULE
   def self.search_request_on_website(options)
@@ -575,8 +634,32 @@ end
           }
         }
       )
+  end
 
+  def self.send_basic_webview_button(webview, text='Webview Message Text', button_text='Open Webview')
 
+    url = webview
+
+    puts url
+
+    Bot.deliver(
+        recipient: @fb_params.sender,
+        message: {
+          attachment: {
+            type: 'template',
+            payload: {
+              template_type: 'button',
+              text: text,
+              buttons: [
+                type: 'web_url',
+                title: button_text,
+                url: webview,
+                webview_height_ratio: "tall"
+              ]
+            }
+          }
+        }
+      )
   end
 
 
@@ -627,15 +710,15 @@ end
   #geo utils
   def self.get_address_from_latlng
     #https://console.developers.google.com/flows/enableapi?apiid=geolocation&keyType=SERVER_SIDE&reusekey=true
-    response = HTTParty.get("https://maps.googleapis.com/maps/api/geocode/json?latlng=#{@msg_meta["coordinates"]["lat"]},#{@msg_meta["coordinates"]["long"]}&key=#{Settings.googlegeo_api_key}")
+    response = HTTParty.get("https://maps.googleapis.com/maps/api/geocode/json?latlng=#{@msg_meta["coordinates"]["lat"]},#{@msg_meta["coordinates"]["long"]}&key=#{Settings.geocoding_api_key}")
     address_infos = JSON.parse(response.body)
     address_infos["results"][0]["formatted_address"]
   end
 
-  def self.get_latlng_from_address(address)
-    response = HTTParty.get("https://maps.googleapis.com/maps/api/geocode/json?language=es&address=#{address}&bounds=40.220903, -4.051226|40.679764, -3.202067&key=#{Settings.googlegeo_api_key}")
+  def self.get_address_from_address(address)
+    response = HTTParty.get("https://maps.googleapis.com/maps/api/geocode/json?language=es&address=#{address}&bounds=40.220903, -4.051226|40.679764, -3.202067&key=#{Settings.geocoding_api_key}")
     location_infos = JSON.parse(response.body)
-    {geometry: location_infos["results"][0]["geometry"]["location"], address: location_infos["results"][0]["formatted_address"]}
+    location_infos["results"][0]["formatted_address"]
   end
 
   def self.get_weather_from_latlng

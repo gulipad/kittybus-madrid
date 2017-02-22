@@ -188,6 +188,7 @@ class BotLogic < BaseBotLogic
 
 	def self.delete_location(stop_id)
 		typing_indicator
+		User.find_by(id: @current_user.id).favorites.find_by(stop_id: stop_id).delete()
 		reply_message "Ok, #{@first_name}! Parada borrada :smiley_cat:"
 		typing_off
 	end

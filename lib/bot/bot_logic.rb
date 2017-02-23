@@ -24,12 +24,9 @@ class BotLogic < BaseBotLogic
         			list_instructions
         		return 
         		when "bot_start_payload"
-        		reply_message ":cat: Miau! Hola #{@first_name}! Yo soy KittyBus, te digo cuánto le queda al bus!"
-        		reply_message "Puedes darme un código de parada, o preguntar por paradas cercanas cuando quieras!:heart_eyes_cat:"
-        		reply_message "Puedes guardar paradas en tus favoritos para que no se te olviden!"
-        		reply_message "También puedes preguntarme cómo llegar a cualquier sitio. :smiley_cat:"
-        		reply_message "Y por ultimooo...recuerda que si en cualquier momento tienes alguna duda, pudes escribir AYUDA así en mayúsculas y te digo todo lo que sé hacer. Miau! :smiley_cat:"
-        		state_go 1
+        		reply_message ":cat: Miau! Hola #{@first_name}! Yo soy KittyBus!"
+        		reply_quick_reply "Sabes ya lo que se hacer o quieres que te lo diga? :heart_eyes_cat:", ['Dímelo porfa!', 'Ya te conozco']
+        		state_go 0
         		return
         		
       	end
@@ -42,7 +39,25 @@ class BotLogic < BaseBotLogic
 	end
 
 	def self.greet
-        state_go 
+		onboarding = get_message
+		puts 'onboarding'
+		case onboarding
+		when "Dímelo porfa!"
+			typing_indicator   
+			reply_message "Puedes darme un código de parada, o preguntar por paradas cercanas cuando quieras!:heart_eyes_cat:"
+			sleep(1)
+			reply_quick_reply "También puedes preguntarme cómo llegar a cualquier sitio (de Madrid claro jeje). :smiley_cat:", ["Entendido"]
+        when "Entendido"
+        	reply_message "Puedes guardar paradas en tus favoritos para que no se te olviden!"
+			reply_message "Y por ultimooo... si en cualquier momento tienes alguna duda, pudes escribir AYUDA así en mayúsculas y te digo todo lo que sé hacer. Miau! :smiley_cat:"
+        	state_go 
+		when "Ya te conozco"
+			reply_message "Okey #{@first_name}, pues aqui estoy para lo que me necesites :smiley_cat:"
+        	state_go 
+		else
+			"No he pillao eso, pero da igual, ya estoy listo para lo que necesites. Si en algún momento dudas, puedes poner AYUDA así en mayúsculas."
+			state_go
+		end
 	end
 
 	def self.convo_root
@@ -64,6 +79,12 @@ class BotLogic < BaseBotLogic
 		elsif ai_response[:result][:metadata][:intentName] == 'thanks'
 			reply_message ":smiley_cat: No hay de que! Aquí estoy cuando quieras. Miau!"
 		elsif ai_response[:result][:metadata][:intentName] == 'greeting'
+			ai_reply = sprintf(ai_response[:result][:fulfillment][:speech].to_s, @first_name)
+			reply_message ai_reply
+		elsif ai_response[:result][:metadata][:intentName] == 'farewell'
+			ai_reply = sprintf(ai_response[:result][:fulfillment][:speech].to_s, @first_name)
+			reply_message ai_reply
+		elsif ai_response[:result][:metadata][:intentName] == 'agreement'
 			ai_reply = sprintf(ai_response[:result][:fulfillment][:speech].to_s, @first_name)
 			reply_message ai_reply
 		elsif ai_response[:result][:metadata][:intentName] == 'insultDefense'

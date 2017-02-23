@@ -8,7 +8,7 @@ end
 
 class BaseBotLogic
   # Initialize API AI client
-  @@client = ApiAiRuby::Client.new(:client_access_token => ENV["API_AI_TOKEN"])
+  @@client = ApiAiRuby::Client.new(:client_access_token => Figaro.env.API_AI_TOKEN)
 
   def self.get_profile(user_id)
     response = HTTParty.get("https://graph.facebook.com/v2.6/#{user_id}?fields=first_name,last_name,profile_pic,locale,timezone,gender&access_token=#{Settings.page_access_token}")
@@ -103,6 +103,7 @@ class BaseBotLogic
   def self.reply_quick_reply(msg, options)
     options ||= %W(Yes No)
     if @request_type == "TEXT" or @request_type == "CALLBACK"
+      msg = compute_emojis(msg)
       Bot.deliver(
         recipient: @fb_params.sender,
         message: {
@@ -309,7 +310,7 @@ end
     if @emt_response[:errorCode] != "-1"
       return @emt_response
     end
-    isArray = @emt_response['arrives']['arriveEstimationList']['arrive'].kind_of?(Array)
+    isArray = @emt_response['arrives']['arriveEstimationList']['arrive'].kind_of?(Array) ## API EMT es shit. Generalmente devuelve array, pero cerca de las 23 se le pira y a veces no devuelve array.
     if !isArray
       @emt_response['arrives']['arriveEstimationList']['arrive']= [@emt_response['arrives']['arriveEstimationList']['arrive']]
     end
@@ -372,8 +373,6 @@ end
     lat =  @msg_meta["coordinates"]["lat"]
     lng = @msg_meta["coordinates"]["long"]
     response = HTTParty.get("https://servicios.emtmadrid.es:8443/geo/ServiceGEO.asmx/getStopsFromXY?idClient=#{idClient}&passKey=#{passKey}&coordinateX=#{lng}&coordinateY=#{lat}&Radius=#{radius}&statistics=&cultureInfo=")
-    puts '#########'
-    puts response["Output"]["Stop"]
     if !response["Output"]["Stop"]  
       return nil
     end
@@ -388,56 +387,8 @@ end
     if destination_address == nil
       return nil
     end
-    puts destination_address
     url = "https://www.google.com/maps?saddr=#{start_address}&daddr=#{destination_address}&ie=UTF8&f=d&sort=def&dirflg=rB&hl=es".gsub(" ", "%20")
   end
-
-  # def self.get_route
-  #   google_route = HTTParty.get("https://maps.googleapis.com/maps/api/directions/json?language=es&origin=40.4448303,-3.7049905&destination=40.4316254,-3.7147&mode=transit&transit_mode=bus&key=#{Settings.geocoding_api_key}") 
-  #   google_route = JSON.parse(google_route.body)
-  #   if google_route["status"] == "OK"
-  #     google_route["routes"][0]["legs"][0]["steps"].each do |step|
-  #       if step["travel_mode"] == "TRANSIT"
-  #         @bus_info = step
-  #       end
-  #     end
-  #   else
-  #     return 'error'
-  #   end
-  #   puts @bus_info
-  #   @emt_route = 'ok'
-    
-  # end
-
-  # def self.get_route
-  #   url = "https://openbus.emtmadrid.es:9443/emt-proxy-server/last/media/GetStreetRoute.php"
-  #   request = {
-  #       :idClient => idClient,
-  #       :passKey => passKey,
-  #       :coordinateXFrom  => "-3.703740",
-  #       :coordinateYFrom => "40.446824",
-  #       :coordinateXTo => "-3.713053",
-  #       :coordinateYTo => "40.431783",
-  #       :statistics => nil,
-  #       :cultureInfo => nil,
-  #       :originName => nil,
-  #       :destinationName => nil,
-  #       :criteriaSelection => "11",
-  #       :year => nil,
-  #       :day => nil,
-  #       :month => nil,
-  #       :hour => nil,
-  #       :minute => nil,
-  #       :generarAudio => nil,
-  #       }
-
-  #   #@emt_route = HTTParty.get("https://servicios.emtmadrid.es:8443/servicemedia/servicemedia.asmx/GetStreetRoute?idClient=WEB.SERV.@gmail.com&passKey=$$$$$$-$$$$-$$$$-$$$$$-$$$$$&coordinateXFrom=-3.703740&coordinateYFrom=40.446824&coordinateXTo=-3.713053&coordinateYTo=40.431783&statistics=&cultureInfo=&originName=&destinationName=&criteriaSelection=11&day=&month=&year=&hour=&minute=&generarAudio=") 
-  #   #@emt_route = HTTParty.post(url, :body => request, :headers => {"Content-Type" => "application/x-www-form-urlencoded"}) 
-  #   @emt_route = 'ok'
-  #   puts @emt_route
-  #   @emt_route = 'ok'
-    
-  # end
 
   ## websearch MODULE
   def self.search_request_on_website(options)
@@ -557,9 +508,6 @@ end
     else
       @current_user.state_machine = state
     end
-
-    #puts "going state: " + @current_user.state_machine.to_s
-
     @current_user.save!
   end
 
@@ -612,17 +560,12 @@ end
                             user_id)
   end
 
-
   def self.send_webview_button(webview, text='Webview Message Text', button_text='Open Webview')
     params = {
         token: generate_webview_token(@fb_params.sender["id"]),
         user_id: @fb_params.sender["id"]
       }.to_query
-
-    url = ENV["DOMAIN_NAME"] + "/" + webview + "?" + params
-
-    puts url
-  
+    url = ENV["DOMAIN_NAME"] + "/" + webview + "?" + params  
     Bot.deliver(
         recipient: @fb_params.sender,
         message: {
@@ -648,11 +591,7 @@ end
   end
 
   def self.send_basic_webview_button(webview, text='Webview Message Text', button_text='Open Webview')
-
     url = webview
-
-    puts url
-
     Bot.deliver(
         recipient: @fb_params.sender,
         message: {
@@ -673,9 +612,7 @@ end
       )
   end
 
-
   ## Setup Module
-
 
   def self.set_domain_whitelist
     Facebook::Messenger::Thread.set(
@@ -724,7 +661,6 @@ end
     response = HTTParty.get("https://maps.googleapis.com/maps/api/geocode/json?latlng=#{@msg_meta["coordinates"]["lat"]},#{@msg_meta["coordinates"]["long"]}&key=#{ENV["GEOCODING_API"]}")
     address_infos = JSON.parse(response.body)
     address_infos["results"][0]["formatted_address"]
-
   end
 
   def self.get_address_from_address(address)

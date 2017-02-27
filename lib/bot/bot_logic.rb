@@ -46,7 +46,7 @@ class BotLogic < BaseBotLogic
 			typing_indicator   
 			reply_message "Puedes darme un código de parada, y te digo cuánto le queda al bus"
 			sleep(1)
-        	reply_quick_reply "Y puedes guardar paradas en tus favoritos para que no se te olviden!" , ["Entendido"]
+        	reply_quick_reply "Y puedes guardar paradas en tus favoritos para que no se te olviden!", ["Entendido"]
         when "Entendido"
         	reply_message "También puedes preguntar por paradas cercanas cuando quieras!:heart_eyes_cat:"
 			reply_message "Y por ultimooo... si en cualquier momento tienes alguna duda, pudes escribir AYUDA así en mayúsculas y te digo todo lo que sé hacer. Miau! :smiley_cat:"
@@ -72,7 +72,7 @@ class BotLogic < BaseBotLogic
 			User.find_by(id: @current_user.id).favorites.find_by(stop_id: stop_id) ? delete_location(stop_id) : reject_delete_location
 		elsif @stop_id == 'AYUDA'
 			list_instructions
-		elsif ai_response[:result][:metadata][:intentName] == 'getRoute'
+		elsif ai_response[:result][:metadata][:intentName] == 'getRoute' && ai_response[:result][:score] > 0.8
 			@destination_address = ai_response[:result][:parameters][:address]
 			reply_location_button("Para eso necesito tu ubicación")
 			state_go 4
@@ -247,7 +247,7 @@ class BotLogic < BaseBotLogic
 		reply_message "Veo que tienes alguna duda, no te preocupes, estoy aquí para ayudar! :smiley_cat:"
 		reply_message "Esto es todo lo que sé hacer!"
 		reply_message "Si me das un código de parada, yo te digo que autobuses pasan por ahí y cuánto les queda para llegar! :smiley_cat:"
-		reply_message "Si me lo preguntas, te digo qué paradas tienes alrededor!"
+		reply_message "Si me lo preguntas, te digo qué paradas tienes alrededor! "
 		reply_message "Si quieres guardar paradas en tus favoritos, dime GUARDAR y el código de parada. (i.e. GUARDAR 123)."
 		reply_message "Y eso es todo amigos! Miau! :smiley_cat:"
 		typing_off

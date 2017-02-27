@@ -46,7 +46,7 @@ class BotLogic < BaseBotLogic
 			typing_indicator   
 			reply_message "Puedes darme un código de parada, y te digo cuánto le queda al bus"
 			sleep(1)
-        	reply_message "Y puedes guardar paradas en tus favoritos para que no se te olviden!"
+        	reply_quick_reply "Y puedes guardar paradas en tus favoritos para que no se te olviden!" , ["Entendido"]
         when "Entendido"
         	reply_message "También puedes preguntar por paradas cercanas cuando quieras!:heart_eyes_cat:"
 			reply_message "Y por ultimooo... si en cualquier momento tienes alguna duda, pudes escribir AYUDA así en mayúsculas y te digo todo lo que sé hacer. Miau! :smiley_cat:"

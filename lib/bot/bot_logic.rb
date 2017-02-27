@@ -93,7 +93,7 @@ class BotLogic < BaseBotLogic
 			reply_message ai_response[:result][:fulfillment][:speech]
 		elsif ai_response[:result][:metadata][:intentName] == 'favorites'
 			handle_favorites(ai_response[:result][:parameters])
-		elsif ai_response[:result][:metadata][:intentName] == 'locationRequest'
+		elsif ai_response[:result][:metadata][:intentName] == 'locationRequest' && ai_response[:result][:score] > 0.8
 			reply_location_button("Para eso necesito tu ubicación")
 			state_go 3
 		else @stop_id = get_message.gsub(/[^0-9]/,"")

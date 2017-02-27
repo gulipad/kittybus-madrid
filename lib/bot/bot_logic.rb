@@ -44,11 +44,11 @@ class BotLogic < BaseBotLogic
 		case onboarding
 		when "Dímelo porfa!"
 			typing_indicator   
-			reply_message "Puedes darme un código de parada, o preguntar por paradas cercanas cuando quieras!:heart_eyes_cat:"
+			reply_message "Puedes darme un código de parada, y te digo cuánto le queda al bus"
 			sleep(1)
-			reply_quick_reply "También puedes preguntarme cómo llegar a cualquier sitio (de Madrid claro jeje). :smiley_cat:", ["Entendido"]
+        	reply_message "Y puedes guardar paradas en tus favoritos para que no se te olviden!"
         when "Entendido"
-        	reply_message "Puedes guardar paradas en tus favoritos para que no se te olviden!"
+        	reply_message "También puedes preguntar por paradas cercanas cuando quieras!:heart_eyes_cat:"
 			reply_message "Y por ultimooo... si en cualquier momento tienes alguna duda, pudes escribir AYUDA así en mayúsculas y te digo todo lo que sé hacer. Miau! :smiley_cat:"
         	state_go 
 		when "Ya te conozco"
@@ -248,7 +248,6 @@ class BotLogic < BaseBotLogic
 		reply_message "Esto es todo lo que sé hacer!"
 		reply_message "Si me das un código de parada, yo te digo que autobuses pasan por ahí y cuánto les queda para llegar! :smiley_cat:"
 		reply_message "Si me lo preguntas, te digo qué paradas tienes alrededor!"
-		reply_message "Si me dices 'quiero ir a...' o 'cómo se va a...' o algo así, te ayudo a encontrar tu camino!:heart_eyes_cat:"
 		reply_message "Si quieres guardar paradas en tus favoritos, dime GUARDAR y el código de parada. (i.e. GUARDAR 123)."
 		reply_message "Y eso es todo amigos! Miau! :smiley_cat:"
 		typing_off

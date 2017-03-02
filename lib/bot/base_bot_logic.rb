@@ -331,6 +331,22 @@ end
     bus_lines_available
   end
 
+  def self.get_all_times
+    bus_list = @emt_response['arrives']['arriveEstimationList']['arrive']
+
+    total_hash = bus_list.reduce({}) do |final_hash, bus|
+      if final_hash[bus["lineId"].to_sym]
+        puts "PUSH" 
+        final_hash[bus["lineId"].to_sym].push(bus["busTimeLeft"])
+      else 
+        puts "NOT PUSH"
+        final_hash[bus["lineId"].to_sym] = [bus["busTimeLeft"]]
+      end
+      final_hash
+    end 
+
+  end
+
   def self.get_times(bus_id)
     response =  @emt_response
     bus_list = response['arrives']['arriveEstimationList']['arrive']
@@ -338,7 +354,7 @@ end
       item['lineId']
     end 
     if !bus_line_conductor.uniq.include?(bus_id) 
-      return "not_included"
+      return false
     end
     bus_time_conductor = bus_list.map do |item|
         if item['busTimeLeft'] != 999999

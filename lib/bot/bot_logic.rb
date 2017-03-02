@@ -61,42 +61,46 @@ class BotLogic < BaseBotLogic
 	end
 
 	def self.convo_root
-		@stop_id = get_message
+		@user_says = get_message
 		typing_indicator
-		ai_response = ai_response(@stop_id)
-		if @stop_id[/GUARDAR {0,5}/]
-			stop_id = @stop_id.gsub('GUARDAR ', '')
+		ai_response = ai_response(@user_says)
+		ai_intent = ai_response[:result][:metadata][:intentName]
+		ai_reply = ai_response[:result][:fulfillment][:speech].to_s
+		ai_score = ai_response[:result][:score]
+
+		if @user_says[/GUARDAR \d{0,5}/i]
+			stop_id = @user_says.gsub(/GUARDAR/i, '')
 			User.find_by(id: @current_user.id).favorites.find_by(stop_id: stop_id) ? reject_save_location : save_location(stop_id)
-		elsif @stop_id[/BORRAR {0,5}/]
-			stop_id = @stop_id.gsub('BORRAR ', '')
+		elsif @user_says[/BORRAR \d{0,5}/i]
+			stop_id = @user_says.gsub(/BORRAR/i, '')
 			User.find_by(id: @current_user.id).favorites.find_by(stop_id: stop_id) ? delete_location(stop_id) : reject_delete_location
-		elsif @stop_id == 'AYUDA'
+		elsif ai_intent == 'help'
 			list_instructions
-		elsif ai_response[:result][:metadata][:intentName] == 'getRoute' && ai_response[:result][:score] > 0.8
+		elsif ai_intent == 'getRoute' && ai_score > 0.8
 			@destination_address = ai_response[:result][:parameters][:address]
 			reply_location_button("Para eso necesito tu ubicación")
 			state_go 4
-		elsif ai_response[:result][:metadata][:intentName] == 'thanks'
+		elsif ai_intent == 'thanks'
 			reply_message ":smiley_cat: No hay de que! Aquí estoy cuando quieras. Miau!"
-		elsif ai_response[:result][:metadata][:intentName] == 'greeting'
-			ai_reply = sprintf(ai_response[:result][:fulfillment][:speech].to_s, @first_name)
+		elsif ai_intent == 'greeting'
+			ai_reply = sprintf(ai_reply, @first_name)
 			reply_message ai_reply
-		elsif ai_response[:result][:metadata][:intentName] == 'farewell'
-			ai_reply = sprintf(ai_response[:result][:fulfillment][:speech].to_s, @first_name)
+		elsif ai_intent == 'farewell'
+			ai_reply = sprintf(ai_reply, @first_name)
 			reply_message ai_reply
-		elsif ai_response[:result][:metadata][:intentName] == 'agreement'
-			ai_reply = sprintf(ai_response[:result][:fulfillment][:speech].to_s, @first_name)
+		elsif ai_intent == 'agreement'
+			ai_reply = sprintf(ai_reply, @first_name)
 			reply_message ai_reply
-		elsif ai_response[:result][:metadata][:intentName] == 'insultDefense'
-			ai_reply = sprintf(ai_response[:result][:fulfillment][:speech].to_s, @first_name)
+		elsif ai_intent == 'insultDefense' && ai_score > 0.9
+			ai_reply = sprintf(ai_reply, @first_name)
 			reply_image ['http://i.giphy.com/l3q2SaisWTeZnV9wk.gif', 'http://i.giphy.com/3rg3vxFMGGymk.gif'].sample
-			reply_message ai_response[:result][:fulfillment][:speech]
-		elsif ai_response[:result][:metadata][:intentName] == 'favorites'
+			reply_message ai_reply
+		elsif ai_intent == 'favorites'
 			handle_favorites(ai_response[:result][:parameters])
-		elsif ai_response[:result][:metadata][:intentName] == 'locationRequest' && ai_response[:result][:score] > 0.8
+		elsif ai_intent == 'locationRequest' && ai_score > 0.8
 			reply_location_button("Para eso necesito tu ubicación")
 			state_go 3
-		else @stop_id = get_message.gsub(/[^0-9]/,"")
+		else @user_says = get_message.gsub(/[^0-9]/,"")
 			process_stop
 		end	
 		typing_off	
@@ -105,26 +109,32 @@ class BotLogic < BaseBotLogic
 
 	def self.get_bus_times
 		typing_indicator
-		regexp = get_message[/(n|m|t|h|e|c)\d{1,}|\d{1,}|(\s|^)(U|H|F|G|A)(\s|$)/i]
-		bus_id = (regexp) ? regexp.strip : ""
-		if bus_id != ""	
-			times = get_times(bus_id)
-			if times != "not_included"
-				if times.length == 1
-					reply_message ":cat:Miau! El bus #{times[0]}.  Es el último del día!"
-					state_go 1
+		if get_message[/todas/i]
+			get_all_times
+			state_go 1
+		else
+			regexp = get_message[/(n|m|t|h|e|c)\d{1,}|\d{1,}|(\s|^)(U|H|F|G|A)(\s|$)/i]
+			bus_id = (regexp) ? regexp.strip : ""
+			if bus_id != ""	
+				times = get_times(bus_id)
+				if times
+					if times.length == 1
+						reply_message ":cat:Miau! El bus #{times[0]}.  Es el último del día!"
+						state_go 1
+					else
+						reply_message ["El primer bus #{times[0]}, y el siguiente #{times[1]}. :cat: Miau! ", "Ok! :cat: Tu primer bus #{times[0]}, y hay otro que #{times[1]}."].sample
+						reply_message ["Buen viaje #{@first_name}!", "Estoy aqui cuando quieras!:heart_eyes_cat:", "Ten un viaje estupendo! :cat:"].sample
+						state_go 1
+					end
 				else
-					reply_message ["El primer bus #{times[0]}, y el siguiente #{times[1]}. :cat: Miau! ", "Ok! :cat: Tu primer bus #{times[0]}, y hay otro que #{times[1]}."].sample
-					reply_message ["Buen viaje #{@first_name}!", "Estoy aqui cuando quieras!:heart_eyes_cat:", "Ten un viaje estupendo! :cat:"].sample
-					state_go 1
+					reply_message "No tengo datos de ese bus, sorry. :crying_cat_face:"
+					reply_quick_reply "Tengo estos", @bus_lines
 				end
-			else
-				reply_message "No tengo datos de ese bus, sorry. :crying_cat_face:"
-				reply_quick_reply "Tengo estos", @bus_lines
+			else 
+				reply_message "No he entendido eso. Necesito una línea de bus. :cat:"
 			end
-		else 
-			reply_message "No he entendido eso. Necesito una línea de bus. :cat:"
 		end
+		
 		typing_off
 	end
 
@@ -223,12 +233,12 @@ class BotLogic < BaseBotLogic
 
 	def self.process_stop
 		typing_indicator
-		if @stop_id != ""
+		if @user_says != ""
 			typing_indicator
-			response = get_emt_data(@stop_id)
+			response = get_emt_data(@user_says)
 			if response['errorCode'] != "-1"
-				@current_user.profile = {stop_id: @stop_id}
-				reply_message  ["Lo tengo! :smiley_cat: Parada #{@stop_id} - #{response['stop']['direction']}", "Genial! :smiley_cat: Parada #{@stop_id} - #{response['stop']['direction']}"].sample
+				@current_user.profile = {stop_id: @user_says}
+				reply_message  ["Lo tengo! :smiley_cat: Parada #{@user_says} - #{response['stop']['direction']}", "Genial! :smiley_cat: Parada #{@user_says} - #{response['stop']['direction']}"].sample
 				@bus_lines = get_lines(response)
 				reply_quick_reply "Tengo datos de estos buses!", @bus_lines
 				puts @bus_lines

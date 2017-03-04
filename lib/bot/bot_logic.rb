@@ -49,7 +49,7 @@ class BotLogic < BaseBotLogic
         	reply_quick_reply "Y puedes guardar paradas en tus favoritos para que no se te olviden!", ["Entendido"]
         when "Entendido"
         	reply_message "También puedes preguntar por paradas cercanas cuando quieras!:heart_eyes_cat:"
-			reply_message "Y por ultimooo... si en cualquier momento tienes alguna duda, pudes escribir AYUDA así en mayúsculas y te digo todo lo que sé hacer. Miau! :smiley_cat:"
+			reply_message "Y por ultimooo... si en cualquier momento tienes alguna duda, pudes escribir AYUDA así en mayúsculas y te digo todo lo que sé hacer. Miau! :smile_cat:"
         	state_go 
 		when "Ya te conozco"
 			reply_message "Okey #{@first_name}, pues aqui estoy para lo que me necesites :smiley_cat:"
@@ -81,7 +81,7 @@ class BotLogic < BaseBotLogic
 			reply_location_button("Para eso necesito tu ubicación")
 			state_go 4
 		elsif ai_intent == 'thanks'
-			reply_message ":smiley_cat: No hay de que! Aquí estoy cuando quieras. Miau!"
+			reply_message ai_reply
 		elsif ai_intent == 'greeting'
 			ai_reply = sprintf(ai_reply, @first_name)
 			reply_message ai_reply
@@ -109,8 +109,10 @@ class BotLogic < BaseBotLogic
 
 	def self.get_bus_times
 		typing_indicator
-		if get_message[/todas/i]
-			get_all_times
+		if get_message[/todos/i]
+			reply_message ["Okey, aqui tienes :smiley_cat:", "Here you go #{@first_name}! :smile_cat"].sample
+			reply_message get_all_times
+			reply_message [":heart_eyes_cat::heart_eyes_cat:", ":smiley_cat::smiley_cat:"].sample
 			state_go 1
 		else
 			regexp = get_message[/(n|m|t|h|e|c)\d{1,}|\d{1,}|(\s|^)(U|H|F|G|A)(\s|$)/i]
@@ -134,7 +136,6 @@ class BotLogic < BaseBotLogic
 				reply_message "No he entendido eso. Necesito una línea de bus. :cat:"
 			end
 		end
-		
 		typing_off
 	end
 
@@ -185,7 +186,7 @@ class BotLogic < BaseBotLogic
 	def self.handle_favorites(entities)
 		typing_indicator
 		if entities[:save] == '' && entities[:see] == ''
-			reply_message 'Para guardar una parada a favoritos, pon GUARDAR seguido del código de parada. Por ejemplo GUARDAR 123 :smiley_cat:'
+			reply_message 'Para guardar una parada a favoritos, pon GUARDAR seguido del código de parada. Por ejemplo GUARDAR 123 :smile_cat:'
 			reply_message 'Para ver tus favoritos, sólo tienes que pedirmelo! Miau! :heart_eyes_cat:'
 		elsif entities[:save] != ''
 			reply_message 'Para guardar una parada a favoritos, pon GUARDAR seguido del código de parada. Por ejemplo GUARDAR 123 :smiley_cat:'
@@ -205,7 +206,7 @@ class BotLogic < BaseBotLogic
 	def self.save_location(stop_id)
 		typing_indicator
 		Favorite.create(user_id: @current_user.id, stop_id: stop_id)
-		reply_message 'Hecho! :smiley_cat:'
+		reply_message 'Hecho! :kissing_cat:'
 		reply_message "Recuerda que puedes borrarla escribiendo BORRAR #{stop_id}"
 		typing_off
 	end
@@ -238,10 +239,12 @@ class BotLogic < BaseBotLogic
 			response = get_emt_data(@user_says)
 			if response['errorCode'] != "-1"
 				@current_user.profile = {stop_id: @user_says}
-				reply_message  ["Lo tengo! :smiley_cat: Parada #{@user_says} - #{response['stop']['direction']}", "Genial! :smiley_cat: Parada #{@user_says} - #{response['stop']['direction']}"].sample
+				reply_message  ["Lo tengo! :smile_cat: Parada #{@user_says} - #{response['stop']['direction']}", "Genial! :smiley_cat: Parada #{@user_says} - #{response['stop']['direction']}"].sample
 				@bus_lines = get_lines(response)
+				if @bus_lines.length > 1
+					@bus_lines.push('Todos')
+				end
 				reply_quick_reply "Tengo datos de estos buses!", @bus_lines
-				puts @bus_lines
 				state_go
 			else 
 				reply_message ":cat: Oooops. No tengo datos de esta parada. Es posible que no haya autobuses a esta hora.:crying_cat_face:"
@@ -254,12 +257,12 @@ class BotLogic < BaseBotLogic
 
 	def self.list_instructions
 		typing_indicator
-		reply_message "Veo que tienes alguna duda, no te preocupes, estoy aquí para ayudar! :smiley_cat:"
+		reply_message "Veo que tienes alguna duda, no te preocupes, estoy aquí para ayudar! :smile_cat:"
 		reply_message "Esto es todo lo que sé hacer!"
 		reply_message "Si me das un código de parada, yo te digo que autobuses pasan por ahí y cuánto les queda para llegar! :smiley_cat:"
 		reply_message "Si me lo preguntas, te digo qué paradas tienes alrededor! "
 		reply_message "Si quieres guardar paradas en tus favoritos, dime GUARDAR y el código de parada. (i.e. GUARDAR 123)."
-		reply_message "Y eso es todo amigos! Miau! :smiley_cat:"
+		reply_message "Y eso es todo amigos! Miau! :kissing_cat:"
 		typing_off
 	end
 

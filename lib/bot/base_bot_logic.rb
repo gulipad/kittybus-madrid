@@ -306,7 +306,6 @@ end
 
     @emt_response = HTTParty.post(url, :body => request, :headers => {"Content-Type" => "application/x-www-form-urlencoded"}) 
     @emt_response = JSON.parse(@emt_response.body)
-    puts @emt_response
     if @emt_response[:errorCode] != "-1"
       return @emt_response
     end
@@ -319,7 +318,6 @@ end
 
   def self.get_lines(response)
     bus_list = response['arrives']['arriveEstimationList']['arrive']
-    puts bus_list
     if bus_list.kind_of?(Array)
       bus_line_conductor = bus_list.map do |item|
         item['lineId']
@@ -333,18 +331,20 @@ end
 
   def self.get_all_times
     bus_list = @emt_response['arrives']['arriveEstimationList']['arrive']
-
-    total_hash = bus_list.reduce({}) do |final_hash, bus|
+    bus_list.reduce({}) do |final_hash, bus|
       if final_hash[bus["lineId"].to_sym]
-        puts "PUSH" 
-        final_hash[bus["lineId"].to_sym].push(bus["busTimeLeft"])
+        final_hash[bus["lineId"].to_sym].push(bus["busTimeLeft"]/60)
       else 
-        puts "NOT PUSH"
-        final_hash[bus["lineId"].to_sym] = [bus["busTimeLeft"]]
+        final_hash[bus["lineId"].to_sym] = [bus["busTimeLeft"]/60]
       end
       final_hash
-    end 
-
+      @final_text = ''
+      final_hash.each do |key, array| 
+        @final_text += "Bus #{key}: #{array.join(', ')} \n"
+      end
+    final_hash
+    end
+    @final_text.gsub("16666", "+20")
   end
 
   def self.get_times(bus_id)
@@ -371,14 +371,11 @@ end
         end
     end
     bus = bus_line_conductor.each_with_index.map { |a, i| a == bus_id ? i : nil }.compact
-    puts "START"
-    puts bus.length
     if bus.length > 1
       times = [bus_time_conductor[bus[0]],bus_time_conductor[bus[1]]]
     else
       times = [bus_time_conductor[bus[0]]]
     end
-    puts times
     times
   end
 
@@ -673,7 +670,6 @@ end
 
   #geo utils
   def self.get_address_from_latlng
-    #https://console.developers.google.com/flows/enableapi?apiid=geolocation&keyType=SERVER_SIDE&reusekey=true
     response = HTTParty.get("https://maps.googleapis.com/maps/api/geocode/json?latlng=#{@msg_meta["coordinates"]["lat"]},#{@msg_meta["coordinates"]["long"]}&key=#{ENV["GEOCODING_API"]}")
     address_infos = JSON.parse(response.body)
     address_infos["results"][0]["formatted_address"]

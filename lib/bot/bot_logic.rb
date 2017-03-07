@@ -261,8 +261,15 @@ class BotLogic < BaseBotLogic
 		typing_indicator
 		reply_message "Veo que tienes alguna duda, no te preocupes, estoy aquí para ayudar! :smile_cat:"
 		reply_message "Esto es todo lo que sé hacer!"
+		typing_indicator
+		sleep(2)
 		reply_message "Si me das un código de parada, yo te digo que autobuses pasan por ahí y cuánto les queda para llegar! :smiley_cat:"
+		typing_indicator
+		sleep(1)
+		typing_indicator
 		reply_message "Si me lo preguntas, te digo qué paradas tienes alrededor! "
+		sleep(1)
+		typing_indicator
 		reply_message "Si quieres guardar paradas en tus favoritos, dime GUARDAR y el código de parada. (i.e. GUARDAR 123)."
 		reply_message "Y eso es todo amigos! Miau! :kissing_cat:"
 		typing_off

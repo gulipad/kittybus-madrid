@@ -3,7 +3,7 @@ class BotLogic < BaseBotLogic
 	def self.setup
 		set_welcome_message "Hola, soy KittyBot! Te ayudo a saber cuánto le queda al bus en Madrid."
 		set_get_started_button "bot_start_payload"
-		set_bot_menu %W(Reset Ayuda)
+		set_bot_menu ['Ayuda','Ver Favoritos', 'Paradas Cercanas','Resetear Bot']
 	end
 
 	def self.cron
@@ -16,21 +16,26 @@ class BotLogic < BaseBotLogic
 
 		if @request_type == "CALLBACK"
       		case @fb_params.payload
-      			when "RESET_BOT"
-	        		@current_user.delete
-	        		reply_message "Removed all your data from our servers."
+      			when "RESETEAR_BOT_BOT"
+	        		reply_message "Oh, perdona si me quedé atascado. Ya debería estar recuperado :smiley_cat:"
         		return
         		when "AYUDA_BOT"
         			list_instructions
         		return 
-        		when "bot_start_payload"
-        		reply_message ":cat: Miau! Hola #{@first_name}! Yo soy KittyBus!"
-        		reply_quick_reply "Sabes ya lo que se hacer o quieres que te lo diga? :heart_eyes_cat:", ['Dímelo porfa!', 'Ya te conozco']
-        		state_go 0
+        		when "PARADAS_CERCANAS_BOT"
+        			reply_location_button("Para eso necesito tu ubicación")
+					state_go 3
+        		return 
+        		when "VER_FAVORITOS_BOT"
+        			view_favorites
         		return
-        		
-      	end
-    end
+        		when "bot_start_payload"
+        			reply_message ":cat: Miau! Hola #{@first_name}! Yo soy KittyBus!"
+        			reply_quick_reply "Sabes ya lo que se hacer o quieres que te lo diga? :heart_eyes_cat:", ['Dímelo porfa!', 'Ya te conozco']
+        			state_go 0
+        		return	
+      		end
+    	end
     	state_action 0, :greet
 		state_action 1, :convo_root
 		state_action 2, :get_bus_times
@@ -40,7 +45,6 @@ class BotLogic < BaseBotLogic
 
 	def self.greet
 		onboarding = get_message
-		puts 'onboarding'
 		case onboarding
 		when "Dímelo porfa!"
 			typing_indicator   
@@ -77,9 +81,10 @@ class BotLogic < BaseBotLogic
 		elsif ai_intent == 'help'
 			list_instructions
 		elsif ai_intent == 'getRoute' && ai_score > 0.8
-			@destination_address = ai_response[:result][:parameters][:address]
-			reply_location_button("Para eso necesito tu ubicación")
-			state_go 4
+			reply_message "Sorry, no te sé decir cómo llegar a un sitio a partir de una dirección. Necesito un código de parada. Miau! :smile_cat:"
+			# @destination_address = ai_response[:result][:parameters][:address]
+			# reply_location_button("Para eso necesito tu ubicación")
+			# state_go 4
 		elsif ai_intent == 'thanks'
 			reply_message ai_reply
 		elsif ai_intent == 'greeting'
@@ -100,6 +105,9 @@ class BotLogic < BaseBotLogic
 		elsif ai_intent == 'locationRequest' && ai_score > 0.8
 			reply_location_button("Para eso necesito tu ubicación")
 			state_go 3
+		elsif ai_intent == 'doSomethingStop'
+			@user_says = get_message.gsub(/[^0-9]/,"")
+			process_stop
 		else @user_says = get_message.gsub(/[^0-9]/,"")
 			process_stop
 		end	
@@ -110,7 +118,7 @@ class BotLogic < BaseBotLogic
 	def self.get_bus_times
 		typing_indicator
 		if get_message[/todos/i]
-			reply_message ["Okey, aqui tienes :smiley_cat:", "Here you go #{@first_name}! :smile_cat"].sample
+			reply_message ["Okey, aqui tienes :smiley_cat:", "Here you go #{@first_name}! :smile_cat:"].sample
 			reply_message get_all_times
 			reply_message [":heart_eyes_cat::heart_eyes_cat:", ":smiley_cat::smiley_cat:"].sample
 			state_go 1
@@ -133,7 +141,8 @@ class BotLogic < BaseBotLogic
 					reply_quick_reply "Tengo estos", @bus_lines
 				end
 			else 
-				reply_message "No he entendido eso. Necesito una línea de bus. :cat:"
+				reply_message "No he entendido eso. Necesito una línea de bus. Volvamos a empezar :cat:"
+				state_go 1
 			end
 		end
 		typing_off
@@ -191,14 +200,7 @@ class BotLogic < BaseBotLogic
 		elsif entities[:save] != ''
 			reply_message 'Para guardar una parada a favoritos, pon GUARDAR seguido del código de parada. Por ejemplo GUARDAR 123 :smiley_cat:'
 		elsif entities[:see] != ''
-
-			if Favorite.where(user_id: @current_user.id).first()
-				reply_quick_buttons "Aquí tienes #{@first_name}! Tus paradas favoritas. Miau!", Favorite.where(user_id: @current_user.id).pluck(:stop_id) 
-			else
-				typing_indicator
-				reply_message "Sorry, no tienes ninguna parada guardada!:crying_cat_face:"
-				reply_message 'Para guardar una parada a favoritos, pon GUARDAR seguido del código de parada. Por ejemplo GUARDAR 123 :smiley_cat:'
-			end
+			view_favorites
 		end
 		typing_off
 	end
@@ -264,6 +266,15 @@ class BotLogic < BaseBotLogic
 		reply_message "Si quieres guardar paradas en tus favoritos, dime GUARDAR y el código de parada. (i.e. GUARDAR 123)."
 		reply_message "Y eso es todo amigos! Miau! :kissing_cat:"
 		typing_off
+	end
+
+	def self.view_favorites
+		if Favorite.where(user_id: @current_user.id).first()
+			reply_quick_buttons "Aquí tienes #{@first_name}! Tus paradas favoritas. Miau!", Favorite.where(user_id: @current_user.id).pluck(:stop_id) 
+		else
+			reply_message "Sorry, no tienes ninguna parada guardada!:crying_cat_face:"
+			reply_message 'Para guardar una parada a favoritos, pon GUARDAR seguido del código de parada. Por ejemplo GUARDAR 123 :smiley_cat:'
+		end
 	end
 
 	## End support functions

@@ -660,12 +660,12 @@ end
     Facebook::Messenger::Thread.set(
       setting_type: 'call_to_actions',
       thread_state: 'existing_thread',
-      call_to_actions: options.map { |option| {type: 'postback', title: option, payload: "#{option.upcase}_BOT"} }
+      call_to_actions: options.map { |option| {type: 'postback', title: option, payload: "#{option.upcase.gsub(" ","_")}_BOT"} }
     )
   end
 
   def self.got_bot_menu?(option)
-    @request_type == "CALLBACK" and @fb_params.payload == "#{option.upcase}_BOT"
+    @request_type == "CALLBACK" and @fb_params.payload == "#{option.upcase.gsub(" ","_")}_BOT"
   end
 
   #geo utils

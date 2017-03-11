@@ -1,22 +1,77 @@
 <script src="http://code.highcharts.com/highcharts.js"></script>
-<select id="user-count-chart-select">
-  <option value="2">2</option>
-  <option value="3">3</option>
-  <option value="4">4</option>
-  <option value="5">5</option>
-  <option value="6">6</option>
-  <option value="7">7</option>
-  <option value="8">8</option>
-  <option value="9">9</option>
-  <option value="10">10</option>
-  <option value="11">11</option>
-  <option value="12">12</option>
-</select>
+<link href="https://fonts.googleapis.com/css?family=Roboto:100,100i,300,300i,400,400i,500,500i,700,700i,900,900i" rel="stylesheet">
+<div class="main-container">
+ 
+  <div class="main-container__text-block">
+    <span class="title">Welcome to the Kittybus Stats Center</span>
+  </div> 
+  <div class="main-container__button-block">
+    <a href="#stats" class="btn btn-full-screen">BEGIN</a>
+  </div>  
+</div>
 
-<div id="container" style="width:400px; height:400px;"></div>
+<div class="graph-container">
+	
+	<a id="stats" class="smooth"></a>
 
-<%= content_tag "div", id: "users", data: {users: @user_count_month_array} do %>
-<% end %>
+	<div class="graph-selector">
+		<div class="graph-selector__modifier">
+			<span class="graph-selector__modifier-text">Please select your area of analysis:</span>	
+			<select id="graph-selector-select">
+			  <option value="1">Select</option>
+			  <option value="2">User growth</option>
+			  <option value="3">Bus stop request growth</option>
+			</select>
+		</div>
+	</div>
+
+	<div id="user-time" class="hide">
+		<div class="user-time__modifier">
+			<span class="user-time__modifier-text">Select the month span:</span>	
+			<select id="user-count-chart-select">
+			  <option value="2">2</option>
+			  <option value="3">3</option>
+			  <option value="4">4</option>
+			  <option value="5">5</option>
+			  <option value="6">6</option>
+			  <option value="7">7</option>
+			  <option value="8">8</option>
+			  <option value="9">9</option>
+			  <option value="10" selected="true">10</option>
+			  <option value="11">11</option>
+			  <option value="12">12</option>
+			</select>
+		</div>
+		<div id="user-time-graph" style="max-width:800px; width:100%; max-height: 800px; height:100%;"></div>
+	</div>
+
+	<div id="request-time" class="hide">
+		<div class="request-time__modifier">
+			<span class="request-time__modifier-text">Select the month span:</span>	
+			<select id="request-count-chart-select">
+			  <option value="2">2</option>
+			  <option value="3">3</option>
+			  <option value="4">4</option>
+			  <option value="5">5</option>
+			  <option value="6">6</option>
+			  <option value="7">7</option>
+			  <option value="8">8</option>
+			  <option value="9">9</option>
+			  <option value="10" selected="true">10</option>
+			  <option value="11">11</option>
+			  <option value="12">12</option>
+			</select>
+		</div>
+		<div id="request-time-graph" style="max-width:800px; width:100%; max-height: 800px; height:100%;"></div>
+	</div>
+
+	<%= content_tag "div", id: "users", data: {users: @user_count_month_array} do %>
+	<% end %>
+	<%= content_tag "div", id: "requests", data: {requests: @request_count_month_array} do %>
+	<% end %>
+
+</div>
+
 
 
 

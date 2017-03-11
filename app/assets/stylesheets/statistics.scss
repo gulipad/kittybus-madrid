@@ -1,3 +1,203 @@
 // Place all the styles related to the statistics controller here.
 // They will automatically be included in application.css.
 // You can use Sass (SCSS) here: http://sass-lang.com/
+html, body, div, span, applet, object, iframe,
+h1, h2, h3, h4, h5, h6, p, blockquote, pre,
+a, abbr, acronym, address, big, cite, code,
+del, dfn, em, img, ins, kbd, q, s, samp,
+small, strike, strong, sub, sup, tt, var,
+b, u, i, center,
+dl, dt, dd, ol, ul, li,
+fieldset, form, label, legend,
+table, caption, tbody, tfoot, thead, tr, th, td,
+article, aside, canvas, details, embed,
+figure, figcaption, footer, header, hgroup,
+menu, nav, output, ruby, section, summary,
+time, mark, audio, video {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  font-size: 100%;
+  font: inherit;
+  vertical-align: baseline;
+}
+article, aside, details, figcaption, figure,
+footer, header, hgroup, menu, nav, section {
+  display: block;
+}
+body {
+  line-height: 1;
+}
+ol, ul {
+  list-style: none;
+}
+blockquote, q {
+  quotes: none;
+}
+blockquote:before, blockquote:after,
+q:before, q:after {
+  content: '';
+  content: none;
+}
+table {
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+/*Texts*/
+
+
+* {
+  -webkit-box-sizing: border-box;
+     -moz-box-sizing: border-box;
+          box-sizing: border-box;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+}
+
+body {
+	display: flex;
+	flex-wrap: wrap;
+  font-family: 'Roboto', sans-serif;
+  color: #fff;
+  line-height: 1.3;
+  -webkit-font-smoothing: antialiased;
+  -webkit-transition: all 1s ease;
+	-moz-transition: all 1s ease;
+	-o-transition: all 1s ease;
+	-ms-transition: all 1s ease;
+}
+
+/*Navigation bar end*/
+
+
+.btn {
+  padding: 15px 30px;
+  border: 2px solid #fff;
+	text-transform: uppercase;
+	letter-spacing: 0.015em;
+	font-size: 18px;
+	font-weight: 700;
+	line-height: 1;
+	color: #fff;
+	text-decoration: none;
+	-webkit-transition: all 0.4s;
+  -moz-transition: all 0.4s;
+  -o-transition: all 0.4s;
+  transition: all 0.4s;
+	border-radius: 10px;
+	margin: auto
+}
+.btn:hover {
+	color: #2af598;
+	background-color: white;
+}
+
+body {
+	min-width: 1015px;
+}
+.main-container {
+	width: 100%;
+	height: 100%;
+	display: flex;
+	flex-wrap: wrap;
+}
+
+.main-container__text-block {
+	text-align: center;
+	width: 100%;
+	font-size: x-large;
+	font-weight: 300;
+	display: flex;
+	justify-content: flex-end;
+}
+
+.main-container__text-block .title {
+	margin: auto;
+}
+
+.main-container__button-block {
+	display: flex;
+	width: 100%;
+}
+
+.graph-container {
+	width: 100%;
+	height: 100%;
+	max-width: 1080px;
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	margin: auto;
+}
+
+.graph-selector {
+	width: 100%;
+}
+
+.graph-selector__modifier {
+	width: 100%;
+	text-align: center;
+	margin: 10px
+}
+
+.graph-selector__modifier-text {
+	font-weight: 200;
+	color: black;
+	font-size: 30px;
+}  
+
+#graph-selector-select {
+	font-size: 24px;
+  font-family: Roboto;
+  font-weight: lighter;
+  margin-left: 10px;
+}
+
+.hide {
+	display: none
+}
+
+.user-time {
+	margin: auto;
+	margin-top: 0;
+	width: 70%;
+	height: 70%;
+	display: flex;
+	flex-wrap: wrap;	
+	justify-content: space-around;
+}
+
+.user-time__modifier {
+	width: 100%;
+	text-align: center;
+	margin: 10px
+}
+
+.user-time__modifier-text {
+	font-weight: 300;
+	color: black;
+}
+
+.request-time {
+	margin: auto;
+	margin-top: 0;
+	width: 70%;
+	height: 70%;
+	display: flex;
+	flex-wrap: wrap;	
+	justify-content: space-around;
+}
+
+.request-time__modifier {
+	width: 100%;
+	text-align: center;
+	margin: 10px
+}
+
+.request-time__modifier-text {
+	font-weight: 300;
+	color: black;
+}	

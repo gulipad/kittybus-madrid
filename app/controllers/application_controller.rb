@@ -44,5 +44,4 @@ class ApplicationController < ActionController::Base
     logger.info "Received #{request.method.inspect} to #{request.url.inspect} from #{request.remote_ip.inspect}. Processing with headers #{http_envs.inspect} and params #{params.inspect}"
   end
 
-
 end

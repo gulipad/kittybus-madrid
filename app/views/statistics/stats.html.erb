@@ -1,0 +1,22 @@
+<script src="http://code.highcharts.com/highcharts.js"></script>
+<select id="user-count-chart-select">
+  <option value="2">2</option>
+  <option value="3">3</option>
+  <option value="4">4</option>
+  <option value="5">5</option>
+  <option value="6">6</option>
+  <option value="7">7</option>
+  <option value="8">8</option>
+  <option value="9">9</option>
+  <option value="10">10</option>
+  <option value="11">11</option>
+  <option value="12">12</option>
+</select>
+
+<div id="container" style="width:400px; height:400px;"></div>
+
+<%= content_tag "div", id: "users", data: {users: @user_count_month_array} do %>
+<% end %>
+
+
+

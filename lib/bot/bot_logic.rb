@@ -45,6 +45,7 @@ class BotLogic < BaseBotLogic
 
 	def self.greet
 		onboarding = get_message
+		puts onboarding
 		case onboarding
 		when "Dímelo porfa!"
 			typing_indicator   
@@ -59,7 +60,7 @@ class BotLogic < BaseBotLogic
 			reply_message "Okey #{@first_name}, pues aqui estoy para lo que me necesites :smiley_cat:"
         	state_go 
 		else
-			"No he pillao eso, pero da igual, ya estoy listo para lo que necesites. Si en algún momento dudas, puedes poner AYUDA así en mayúsculas."
+			reply message "No he pillao eso, pero da igual, ya estoy listo para lo que necesites. Si en algún momento dudas, puedes poner AYUDA así en mayúsculas."
 			state_go
 		end
 	end
@@ -114,6 +115,29 @@ class BotLogic < BaseBotLogic
 		typing_off	
 	end
 
+	def self.process_stop
+		typing_indicator
+		if @user_says != ""
+			typing_indicator
+			response = get_emt_data(@user_says)
+			if response['errorCode'] != "-1"
+				@current_user.profile = {stop_id: @user_says}
+				reply_message  ["Lo tengo! :smile_cat: Parada #{@user_says} - #{response['stop']['direction']}", "Genial! :smiley_cat: Parada #{@user_says} - #{response['stop']['direction']}"].sample
+				@stop_id = @user_says
+				@bus_lines = get_lines(response)
+				if @bus_lines.length > 1
+					@bus_lines.push('Todos')
+				end
+				reply_quick_reply "Tengo datos de estos buses!", @bus_lines
+				state_go
+			else 
+				reply_message ":cat: Oooops. No tengo datos de esta parada. Es posible que no haya autobuses a esta hora.:crying_cat_face:"
+			end	
+		else
+			reply_message ":cat: Creo que me he perdido (soy un poco tonto a veces :crying_cat_face:). Recuerda que puedes escribir AYUDA en cualquier momento!"
+		end
+		typing_off
+	end
 
 	def self.get_bus_times
 		typing_indicator
@@ -128,6 +152,7 @@ class BotLogic < BaseBotLogic
 			if bus_id != ""	
 				times = get_times(bus_id)
 				if times
+					Request.create(user_id: @current_user.id, stop_id: @stop_id, line_id: bus_id)
 					if times.length == 1
 						reply_message ":cat:Miau! El bus #{times[0]}.  Es el último del día!"
 						state_go 1
@@ -231,29 +256,6 @@ class BotLogic < BaseBotLogic
 		typing_indicator
 		reply_message 'Ooops, esta parada no está en tus favoritos :smiley_cat:'
 		reply_message 'Para ver tus favoritos, sólo tienes que pedirmelo! Miau! :heart_eyes_cat:'
-		typing_off
-	end
-
-	def self.process_stop
-		typing_indicator
-		if @user_says != ""
-			typing_indicator
-			response = get_emt_data(@user_says)
-			if response['errorCode'] != "-1"
-				@current_user.profile = {stop_id: @user_says}
-				reply_message  ["Lo tengo! :smile_cat: Parada #{@user_says} - #{response['stop']['direction']}", "Genial! :smiley_cat: Parada #{@user_says} - #{response['stop']['direction']}"].sample
-				@bus_lines = get_lines(response)
-				if @bus_lines.length > 1
-					@bus_lines.push('Todos')
-				end
-				reply_quick_reply "Tengo datos de estos buses!", @bus_lines
-				state_go
-			else 
-				reply_message ":cat: Oooops. No tengo datos de esta parada. Es posible que no haya autobuses a esta hora.:crying_cat_face:"
-			end	
-		else
-			reply_message ":cat: Creo que me he perdido (soy un poco tonto a veces :crying_cat_face:). Recuerda que puedes escribir AYUDA en cualquier momento!"
-		end
 		typing_off
 	end
 

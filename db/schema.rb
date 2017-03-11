@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20170218150237) do
+ActiveRecord::Schema.define(version: 20170309185613) do
 
   create_table "blackllists", force: :cascade do |t|
     t.integer  "user_id"
@@ -36,6 +36,16 @@ ActiveRecord::Schema.define(version: 20170218150237) do
     t.datetime "updated_at",        null: false
     t.integer  "subscription_step"
   end
+
+  create_table "requests", force: :cascade do |t|
+    t.integer  "user_id"
+    t.string   "stop_id"
+    t.string   "line_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
+  add_index "requests", ["user_id"], name: "index_requests_on_user_id"
 
   create_table "subscriptions", force: :cascade do |t|
     t.string   "campaign_name"

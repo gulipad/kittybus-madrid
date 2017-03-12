@@ -6,12 +6,12 @@
 #   cities = City.create([{ name: 'Chicago' }, { name: 'Copenhagen' }])
 #   Mayor.create(name: 'Emanuel', city: cities.first)
 
-200.times do
-	User.create(
-		fb_id: 0000000000000000, 
-		last_message_received: Time.now()-rand(0..5760).minute, 
-		created_at: Time.now()-rand(0..65).day, 
-		profile: nil
+2000.times do
+	Request.create(
+		user_id: rand(0..505), 
+		stop_id: rand(1..9999).to_s, 
+		line_id: rand(1..200).to_s, 
+		created_at: Time.now()-rand(0..65).day 
 	)
 end
 

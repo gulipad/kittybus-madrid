@@ -34,7 +34,6 @@ $(document).ready(function () {
                 $('.graph-selector__modifier-text').css('font-size', '17px')
                 $('#graph-selector-select').css('font-size', '17px')
                 var request_count_array = ($('#requests').data().requests)
-                console.log(request_count_array)
                 processRequestTimeData(request_count_array)
                 window.dispatchEvent(new Event('resize'));
                 break;
@@ -48,10 +47,8 @@ $(document).ready(function () {
 
     $('#user-count-chart-select').on('change', function () {
         var select = $('#user-count-chart-select').val()
-        console.log(select)
-        $.post( "./stats", { value: select} )
+        $.post( "./stats/user", { value: select} )
             .then(function (response) {
-                console.log(response.graph_data)
                 processUserTimeData(response.graph_data)
                 
             }, function (reject) {
@@ -62,10 +59,8 @@ $(document).ready(function () {
 
     $('#request-count-chart-select').on('change', function () {
         var select = $('#request-count-chart-select').val()
-        console.log(select)
-        $.post( "./stats", { value: select} )
+        $.post( "./stats/request", { value: select} )
             .then(function (response) {
-                console.log(response.graph_data)
                 processRequestTimeData(response.graph_data)
                 
             }, function (reject) {
@@ -76,71 +71,80 @@ $(document).ready(function () {
 })
 
 function processUserTimeData (users_count_array) {
-    var users = []
-    var months = []
-    return users_count_array.forEach(function (month) {
-        users.push(month.users)
-        months.push(month.month)
+    var data = []
+    users_count_array.forEach(function (day) {
+        var date = new Date(day.date)
+        data.push([Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(), date.getUTCHours(), date.getUTCMinutes(), date.getUTCSeconds()), day.value])
+    })
 
-        $(function () { 
-            var myChart = Highcharts.chart('user-time-graph', {
-                chart: {
-                    type: 'line'
+    $(function () { 
+        var myChart = Highcharts.chart('user-time-graph', {
+            chart: {
+                type: 'area'
+            },
+            title: {
+                text: 'User Growth in the Past ' + (data.length / 30) + ' Months'
+            },
+            xAxis: {
+                type: 'datetime',
+                dateTimeLabelFormats: {
+                    month: '%b',
+                    year: '%b'
                 },
                 title: {
-                    text: 'User Growth in the Past ' + months.length + ' Months'
-                },
-                xAxis: {
-                    title: {
-                        text: 'Month'
-                    },
-                    categories: months
-                },
-                yAxis: {
-                    title: {
-                        text: 'Users'
-                    }
-                },
-                series: [{
-                    name: 'Users',
-                    data: users
-                }]
-            })
+                    text: 'Date'
+                }
+            },
+            yAxis: {
+                title: {
+                    text: 'Users'
+                }
+            },
+            series: [{
+                name: 'Users',
+                data: data
+            }]
         })
     })
+    
 }
 
 function processRequestTimeData (request_count_array) {
-    var requests = []
-    var months = []
-    return request_count_array.forEach(function (month) {
-        requests.push(month.requests)
-        months.push(month.month)
+    var data = []
+    console.log(request_count_array)
+    request_count_array.forEach(function (day) {
+        var date = new Date(day.date)
+        data.push([Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(), date.getUTCHours(), date.getUTCMinutes(), date.getUTCSeconds()), day.value])
+    })
 
-        $(function () { 
-            var myChart = Highcharts.chart('request-time-graph', {
-                chart: {
-                    type: 'line'
-                },
+    $(function () { 
+        var myChart = Highcharts.chart('request-time-graph', {
+            chart: {
+                type: 'area'
+            },
+            title: {
+                text: 'Bus Request Growth in the Past ' + (data.length / 30) + ' Months'
+            },
+            xAxis: {
+               type: 'datetime',
+               dateTimeLabelFormats: {
+                   month: '%b',
+                   year: '%b'
+               },
+               title: {
+                   text: 'Date'
+               }
+            },
+            yAxis: {
                 title: {
-                    text: 'Bus Request Growth in the Past ' + months.length + ' Months'
-                },
-                xAxis: {
-                    title: {
-                        text: 'Month'
-                    },
-                    categories: months
-                },
-                yAxis: {
-                    title: {
-                        text: 'Requests'
-                    }
-                },
-                series: [{
-                    name: 'Requests',
-                    data: requests
-                }]
-            })
+                    text: 'Requests'
+                }
+            },
+            colors: ['#2af598'],
+            series: [{
+                name: 'Requests',
+                data: data
+            }]
         })
     })
 }

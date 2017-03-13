@@ -60,7 +60,7 @@ class BotLogic < BaseBotLogic
 			reply_message "Okey #{@first_name}, pues aqui estoy para lo que me necesites :smiley_cat:"
         	state_go 
 		else
-			reply message "No he pillao eso, pero da igual, ya estoy listo para lo que necesites. Si en algún momento dudas, puedes poner AYUDA así en mayúsculas."
+			reply_message "Oooh estaba en modo tutorial y no he captado eso. Ahora sí que estoy listo. Si en algún momento dudas, puedes poner AYUDA así en mayúsculas."
 			state_go
 		end
 	end

@@ -107,9 +107,9 @@ class BotLogic < BaseBotLogic
 			reply_location_button("Para eso necesito tu ubicación")
 			state_go 3
 		elsif ai_intent == 'doSomethingStop'
-			@user_says = get_message.gsub(/[^0-9]/,"")
+			@user_says = get_message[/\d+/i]
 			process_stop
-		else @user_says = get_message.gsub(/[^0-9]/,"")
+		else @user_says = get_message[/\d+/i]
 			process_stop
 		end	
 		typing_off	
@@ -117,7 +117,7 @@ class BotLogic < BaseBotLogic
 
 	def self.process_stop
 		typing_indicator
-		if @user_says != ""
+		if @user_says
 			typing_indicator
 			response = get_emt_data(@user_says)
 			if response['errorCode'] != "-1"
@@ -134,7 +134,11 @@ class BotLogic < BaseBotLogic
 				reply_message ":cat: Oooops. No tengo datos de esta parada. Es posible que no haya autobuses a esta hora.:crying_cat_face:"
 			end	
 		else
-			reply_message ":cat: Creo que me he perdido (soy un poco tonto a veces :crying_cat_face:). Recuerda que puedes escribir AYUDA en cualquier momento!"
+			reply_message [
+				":cat: Creo que me he perdido (soy un poco tonto a veces :crying_cat_face:). Recuerda que puedes escribir AYUDA en cualquier momento!",
+				":crying_cat_face: Oooh, no he entendido eso. Puedes escribir AYUDA cuando quieras si tienes alguna duda!"
+			].sample
+
 		end
 		typing_off
 	end

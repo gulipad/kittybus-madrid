@@ -160,7 +160,9 @@ body {
 	display: none
 }
 
-.user-time {
+.user-time, 
+.request-time,
+.bus-stop-analysis {
 	margin: auto;
 	margin-top: 0;
 	width: 70%;
@@ -170,34 +172,17 @@ body {
 	justify-content: space-around;
 }
 
-.user-time__modifier {
+.user-time__modifier, 
+.request-time__modifier,
+.bus-stop-analysis__modifier  {
 	width: 100%;
 	text-align: center;
 	margin: 10px
 }
 
-.user-time__modifier-text {
+.user-time__modifier-text, 
+.request-time__modifier-text,
+.bus-stop-analysis__modifier-text {
 	font-weight: 300;
 	color: black;
 }
-
-.request-time {
-	margin: auto;
-	margin-top: 0;
-	width: 70%;
-	height: 70%;
-	display: flex;
-	flex-wrap: wrap;	
-	justify-content: space-around;
-}
-
-.request-time__modifier {
-	width: 100%;
-	text-align: center;
-	margin: 10px
-}
-
-.request-time__modifier-text {
-	font-weight: 300;
-	color: black;
-}	

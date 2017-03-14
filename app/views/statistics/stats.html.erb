@@ -1,4 +1,6 @@
 <script src="http://code.highcharts.com/highcharts.js"></script>
+<script src="http://code.jquery.com/ui/1.10.2/jquery-ui.js" ></script>
+<link href="http://code.jquery.com/ui/1.10.2/themes/smoothness/jquery-ui.css" rel="Stylesheet"></link>
 <link href="https://fonts.googleapis.com/css?family=Roboto:100,100i,300,300i,400,400i,500,500i,700,700i,900,900i" rel="stylesheet">
 <div class="main-container">
  
@@ -21,6 +23,7 @@
 			  <option value="1">Select</option>
 			  <option value="2">User growth</option>
 			  <option value="3">Bus stop request growth</option>
+			  <option value="4">Bus stop analysis</option>
 			</select>
 		</div>
 	</div>
@@ -29,12 +32,12 @@
 		<div class="user-time__modifier">
 			<span class="user-time__modifier-text">Select the month span:</span>	
 			<select id="user-count-chart-select">
-			  <option value="1">1</option>
+			  <option value="1" selected="true" >1</option>
 			  <option value="2">2</option>
 			  <option value="3">3</option>
 			  <option value="4">4</option>
 			  <option value="5">5</option>
-			  <option value="6" selected="true">6</option>
+			  <option value="6">6</option>
 			  <option value="7">7</option>
 			  <option value="8">8</option>
 			  <option value="9">9</option>
@@ -50,16 +53,16 @@
 		<div class="request-time__modifier">
 			<span class="request-time__modifier-text">Select the month span:</span>	
 			<select id="request-count-chart-select">
-			  <option value="1">1</option>
+			  <option value="1" selected="true" >1</option>
 			  <option value="2">2</option>
 			  <option value="3">3</option>
 			  <option value="4">4</option>
 			  <option value="5">5</option>
-			  <option value="6" selected="true">6</option>
+			  <option value="6">6</option>
 			  <option value="7">7</option>
 			  <option value="8">8</option>
 			  <option value="9">9</option>
-			  <option value="10" selected="true">10</option>
+			  <option value="10">10</option>
 			  <option value="11">11</option>
 			  <option value="12">12</option>
 			</select>
@@ -67,9 +70,20 @@
 		<div id="request-time-graph" style="max-width:800px; width:100%; max-height: 800px; height:100%;"></div>
 	</div>
 
+	<div id="bus-stop-analysis" class="hide">
+		<span class="bus-stop-analysis__modifier-text">Please enter a bus stop code:</span>	
+		<div class="bus-stop-analysis__modifier">
+			<input id="autocomplete-stops" name="bus-stops">
+		</div>
+		<div id="bust-stop-analysis-graph" style="max-width:800px; width:100%; max-height: 800px; height:100%;"></div>
+	</div>
+
+
 	<%= content_tag "div", id: "users", data: {users: @user_count_month_array} do %>
 	<% end %>
 	<%= content_tag "div", id: "requests", data: {requests: @request_count_month_array} do %>
+	<% end %>
+	<%= content_tag "div", id: "stops", data: {stops: @all_stops} do %>
 	<% end %>
 
 </div>

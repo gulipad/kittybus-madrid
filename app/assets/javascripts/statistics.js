@@ -11,8 +11,6 @@ $(document).ready(function () {
       }
      });
 
-    
-
     $('#graph-selector-select').on('change', function () {
         switch($('#graph-selector-select').val()) {
             case "1":
@@ -37,12 +35,37 @@ $(document).ready(function () {
                 processRequestTimeData(request_count_array)
                 window.dispatchEvent(new Event('resize'));
                 break;
+            case "4":
+                hideAllOthers('#bus-stop-analysis')
+                var allStops = ($('#stops').data().stops)
+                $( "#autocomplete-stops" ).autocomplete({ 
+                    source: allStops,
+                    select: function (e, ui) {
+                        var stopId = ui.item.value
+                        $.post( "./stats/stop-analysis", { value: stopId} )
+                            .then(function (response) {
+                                processStopAnalysis(response.graph_data)
+                            }, function (reject) {
+                                console.error(reject)
+                            })
+                    }
+                });
+                $.ui.autocomplete.filter = function (array, term) {
+                   var matcher = new RegExp("^" + $.ui.autocomplete.escapeRegex(term), "i");
+                   return $.grep(array, function (value) {
+                       return matcher.test(value.label || value.value || value);
+                   });
+               };
+
+                $('#bus-stop-analysis').addClass('bus-stop-analysis')
+                $('#bus-stop-analysis').removeClass('hide')
+                $('.bus-stop-analysis__modifier-text').css('font-size', '17px')
+                $('#graph-selector-select').css('font-size', '17px')
+                window.dispatchEvent(new Event('resize'));
+                break;
             default:
                 return
         }
-        
-
-
     })
 
     $('#user-count-chart-select').on('change', function () {
@@ -111,7 +134,6 @@ function processUserTimeData (users_count_array) {
 
 function processRequestTimeData (request_count_array) {
     var data = []
-    console.log(request_count_array)
     request_count_array.forEach(function (day) {
         var date = new Date(day.date)
         data.push([Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(), date.getUTCHours(), date.getUTCMinutes(), date.getUTCSeconds()), day.value])
@@ -149,12 +171,28 @@ function processRequestTimeData (request_count_array) {
     })
 }
 
+function processStopAnalysis (stopData) {
+    console.log(stopData.data, stopData.categories)
+    $(function () { 
+        var myChart = Highcharts.chart('bust-stop-analysis-graph', {
+            chart: {
+                    type: 'bar'
+                },
+
+                xAxis: {
+                    categories: stopData.categories
+                },
+
+                series: [{
+                    data: stopData.data
+                }]
+        })
+    })
+}
+
 function hideAllOthers (graph) {
     var all = ['#user-time', '#request-time']
-    console.log(all)
-    console.log(graph)
     remove(all, graph)
-    console.log(all)
     all.forEach(function (plot) {
         $(plot).removeClass(plot.replace('#', ''))
         $(plot).addClass('hide')
@@ -163,9 +201,9 @@ function hideAllOthers (graph) {
 }
 
 function remove(arr, item) {
-      for(var i = arr.length; i--;) {
-          if(arr[i] === item) {
-              arr.splice(i, 1);
-          }
-      }
-  }
+    for(var i = arr.length; i--;) {
+        if(arr[i] === item) {
+            arr.splice(i, 1);
+        }
+    }
+}

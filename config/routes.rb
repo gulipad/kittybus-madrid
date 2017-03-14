@@ -8,6 +8,7 @@ Rails.application.routes.draw do
   get '/stats', to: 'statistics#stats'
   post '/stats/user', to: 'statistics#refresh_user_chart'
   post '/stats/request', to: 'statistics#refresh_request_chart'
+  post '/stats/stop-analysis', to: 'statistics#stop_analysis'
 
 
   get '/date_picker', to: 'webview#date_picker'

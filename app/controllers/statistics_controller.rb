@@ -53,14 +53,14 @@ class StatisticsController < ApplicationController
 
 	def get_bus_stop_data (stop_id)
 		request_array = Request.where(stop_id: stop_id).pluck(:line_id)
-		colors = ['red', 'red', 'yellow', 'green']
+		colors = ['#B23830', '#F3FF89', '#3E86CC', '#FF7970']
 		output = {}
 		output[:categories] = request_array.uniq
 		output[:data] = []
 		output[:categories].each do |bus_id| 
 			output[:data].push({
 				name: bus_id,
-				color: colors.sample,
+				color: colors.delete(colors.sample),
 				y: request_array.count(bus_id)
 			})
 		end

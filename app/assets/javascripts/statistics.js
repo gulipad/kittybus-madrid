@@ -39,7 +39,7 @@ $(document).ready(function () {
                 hideAllOthers('#bus-stop-analysis')
                 var allStops = ($('#stops').data().stops)
                 $( "#autocomplete-stops" ).autocomplete({ 
-                    source: allStops,
+                    source: allStops.sort(),
                     select: function (e, ui) {
                         var stopId = ui.item.value
                         $.post( "./stats/stop-analysis", { value: stopId} )
@@ -184,6 +184,7 @@ function processStopAnalysis (stopData) {
                 },
 
                 series: [{
+                    name: 'Requests',
                     data: stopData.data
                 }]
         })
@@ -191,7 +192,7 @@ function processStopAnalysis (stopData) {
 }
 
 function hideAllOthers (graph) {
-    var all = ['#user-time', '#request-time']
+    var all = ['#user-time', '#request-time', '#bus-stop-analysis']
     remove(all, graph)
     all.forEach(function (plot) {
         $(plot).removeClass(plot.replace('#', ''))

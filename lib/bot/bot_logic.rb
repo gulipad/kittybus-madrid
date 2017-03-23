@@ -86,30 +86,19 @@ class BotLogic < BaseBotLogic
 			# @destination_address = ai_response[:result][:parameters][:address]
 			# reply_location_button("Para eso necesito tu ubicación")
 			# state_go 4
-		elsif ai_intent == 'thanks'
-			reply_message ai_reply
-		elsif ai_intent == 'greeting'
+		elsif ai_intent == 'thanks' || ai_intent == 'greeting' || ai_intent == 'farewell' || ai_intent == 'agreement' || ai_intent == 'insultDefense' && ai_score > 0.9
 			ai_reply = sprintf(ai_reply, @first_name)
-			reply_message ai_reply
-		elsif ai_intent == 'farewell'
-			ai_reply = sprintf(ai_reply, @first_name)
-			reply_message ai_reply
-		elsif ai_intent == 'agreement'
-			ai_reply = sprintf(ai_reply, @first_name)
-			reply_message ai_reply
-		elsif ai_intent == 'insultDefense' && ai_score > 0.9
-			ai_reply = sprintf(ai_reply, @first_name)
-			reply_image ['http://i.giphy.com/l3q2SaisWTeZnV9wk.gif', 'http://i.giphy.com/3rg3vxFMGGymk.gif'].sample
+			if ai_intent == 'insultDefense'
+			  reply_image ['http://i.giphy.com/l3q2SaisWTeZnV9wk.gif', 'http://i.giphy.com/3rg3vxFMGGymk.gif'].sample
+			end
 			reply_message ai_reply
 		elsif ai_intent == 'favorites'
 			handle_favorites(ai_response[:result][:parameters])
 		elsif ai_intent == 'locationRequest' && ai_score > 0.8
 			reply_location_button("Para eso necesito tu ubicación")
 			state_go 3
-		elsif ai_intent == 'doSomethingStop'
+		else
 			@user_says = get_message[/\d+/i]
-			process_stop
-		else @user_says = get_message[/\d+/i]
 			process_stop
 		end	
 		typing_off	
@@ -152,11 +141,12 @@ class BotLogic < BaseBotLogic
 			state_go 1
 		else
 			regexp = get_message[/(n|m|t|h|e|c)\d{1,}|\d{1,}|(\s|^)(U|H|F|G|A)(\s|$)/i]
-			bus_id = (regexp) ? regexp.strip : ""
-			if bus_id != ""	
-				times = get_times(bus_id)
+			line_id = (regexp) ? regexp.strip : ""
+			if line_id != ""	
+				times = get_times(line_id)
 				if times
-					Request.create(user_id: @current_user.id, stop_id: @stop_id, line_id: bus_id)
+					Request.create(user_id: @current_user.id, stop_id: @stop_id, line_id: line_id)
+					previousRequests = Request.filter_last_twenty_minutes.where(line_id: line_id).count
 					if times.length == 1
 						reply_message ":cat:Miau! El bus #{times[0]}.  Es el último del día!"
 						state_go 1
@@ -164,6 +154,9 @@ class BotLogic < BaseBotLogic
 						reply_message ["El primer bus #{times[0]}, y el siguiente #{times[1]}. :cat: Miau! ", "Ok! :cat: Tu primer bus #{times[0]}, y hay otro que #{times[1]}."].sample
 						reply_message ["Buen viaje #{@first_name}!", "Estoy aqui cuando quieras!:heart_eyes_cat:", "Ten un viaje estupendo! :cat:"].sample
 						state_go 1
+					end
+					if previousRequests > 15
+						reply_message "Me han pedido ese bus #{previousRequests} veces en los últimos 20 minutos. Asi q ojico, que igual va petao :scream_cat:"
 					end
 				else
 					reply_message "No tengo datos de ese bus, sorry. :crying_cat_face:"

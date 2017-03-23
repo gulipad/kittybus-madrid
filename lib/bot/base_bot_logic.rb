@@ -347,13 +347,13 @@ end
     @final_text.gsub("16666", "+20")
   end
 
-  def self.get_times(bus_id)
+  def self.get_times(line_id)
     response =  @emt_response
     bus_list = response['arrives']['arriveEstimationList']['arrive']
     bus_line_conductor = bus_list.map do |item|
       item['lineId']
     end 
-    if !bus_line_conductor.uniq.include?(bus_id) 
+    if !bus_line_conductor.uniq.include?(line_id) 
       return false
     end
     bus_time_conductor = bus_list.map do |item|
@@ -370,7 +370,7 @@ end
           minutes = "tardará más de 20 minutos"
         end
     end
-    bus = bus_line_conductor.each_with_index.map { |a, i| a == bus_id ? i : nil }.compact
+    bus = bus_line_conductor.each_with_index.map { |a, i| a == line_id ? i : nil }.compact
     if bus.length > 1
       times = [bus_time_conductor[bus[0]],bus_time_conductor[bus[1]]]
     else

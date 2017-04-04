@@ -154,6 +154,7 @@ class BotLogic < BaseBotLogic
 					if previousRequests > 15
 						reply_message Responses.previous_requests % previousRequests
 					end
+					typing_off
 				else
 					reply_message Responses.no_data_bus
 					reply_quick_reply "Tengo estos", @bus_lines

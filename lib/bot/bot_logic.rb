@@ -1,7 +1,8 @@
-class BotLogic < BaseBotLogic
+
+class BotLogic < BaseBotLogic	
 	
 	def self.setup
-		set_welcome_message "Hola, soy KittyBot! Te ayudo a saber cuánto le queda al bus en Madrid."
+		set_welcome_message "Hola, soy Kitty! Te ayudo a saber cuánto le queda al bus en Madrid."
 		set_get_started_button "bot_start_payload"
 		set_bot_menu ['Ayuda','Ver Favoritos', 'Paradas Cercanas','Resetear Bot']
 	end
@@ -17,21 +18,21 @@ class BotLogic < BaseBotLogic
 		if @request_type == "CALLBACK"
       		case @fb_params.payload
       			when "RESETEAR_BOT_BOT"
-	        		reply_message "Oh, perdona si me quedé atascado. Ya debería estar recuperado :smiley_cat:"
+	        		reply_message Responses.reset
         		return
         		when "AYUDA_BOT"
         			list_instructions
         		return 
         		when "PARADAS_CERCANAS_BOT"
-        			reply_location_button("Para eso necesito tu ubicación")
+        			reply_location_button(Responses.location_request)
 					state_go 3
         		return 
         		when "VER_FAVORITOS_BOT"
         			view_favorites
         		return
         		when "bot_start_payload"
-        			reply_message ":cat: Miau! Hola #{@first_name}! Yo soy KittyBus!"
-        			reply_quick_reply "Sabes ya lo que se hacer o quieres que te lo diga? :heart_eyes_cat:", ['Dímelo porfa!', 'Ya te conozco']
+        			reply_message Responses.main_greeting % @first_name
+        			reply_quick_reply Responses.tutorial_query, ['Dímelo porfa!', 'Ya te conozco']
         			state_go 0
         		return	
       		end
@@ -45,22 +46,21 @@ class BotLogic < BaseBotLogic
 
 	def self.greet
 		onboarding = get_message
-		puts onboarding
 		case onboarding
 		when "Dímelo porfa!"
 			typing_indicator   
-			reply_message "Puedes darme un código de parada, y te digo cuánto le queda al bus"
+			reply_message Responses.onboarding[:stop_code]
 			sleep(1)
-        	reply_quick_reply "Y puedes guardar paradas en tus favoritos para que no se te olviden!", ["Entendido"]
+        	reply_quick_reply Responses.onboarding[:save_stop], ["Entendido"]
         when "Entendido"
-        	reply_message "También puedes preguntar por paradas cercanas cuando quieras!:heart_eyes_cat:"
-			reply_message "Y por ultimooo... si en cualquier momento tienes alguna duda, pudes escribir AYUDA así en mayúsculas y te digo todo lo que sé hacer. Miau! :smile_cat:"
+        	reply_message Responses.onboarding[:close_stops]
+			reply_message Responses.onboarding[:help]
         	state_go 
 		when "Ya te conozco"
-			reply_message "Okey #{@first_name}, pues aqui estoy para lo que me necesites :smiley_cat:"
+			reply_message Responses.no_tutorial % @first_name
         	state_go 
 		else
-			reply_message "Oooh estaba en modo tutorial y no he captado eso. Ahora sí que estoy listo. Si en algún momento dudas, puedes poner AYUDA así en mayúsculas."
+			reply_message Responses.tutorial_fail
 			state_go
 		end
 	end
@@ -82,20 +82,20 @@ class BotLogic < BaseBotLogic
 		elsif ai_intent == 'help'
 			list_instructions
 		elsif ai_intent == 'getRoute' && ai_score > 0.8
-			reply_message "Sorry, no te sé decir cómo llegar a un sitio a partir de una dirección. Necesito un código de parada. Miau! :smile_cat:"
+			reply_message Responses.get_route
 			# @destination_address = ai_response[:result][:parameters][:address]
 			# reply_location_button("Para eso necesito tu ubicación")
 			# state_go 4
 		elsif ai_intent == 'thanks' || ai_intent == 'greeting' || ai_intent == 'farewell' || ai_intent == 'agreement' || ai_intent == 'insultDefense' && ai_score > 0.9
-			ai_reply = sprintf(ai_reply, @first_name)
+			ai_reply = ai_reply % @first_name
 			if ai_intent == 'insultDefense'
-			  reply_image ['http://i.giphy.com/l3q2SaisWTeZnV9wk.gif', 'http://i.giphy.com/3rg3vxFMGGymk.gif'].sample
+			  reply_image Responses.insult_gif
 			end
 			reply_message ai_reply
 		elsif ai_intent == 'favorites'
 			handle_favorites(ai_response[:result][:parameters])
 		elsif ai_intent == 'locationRequest' && ai_score > 0.8
-			reply_location_button("Para eso necesito tu ubicación")
+			reply_location_button Responses.location_request 
 			state_go 3
 		else
 			@user_says = get_message[/\d+/i]
@@ -110,23 +110,19 @@ class BotLogic < BaseBotLogic
 			typing_indicator
 			response = get_emt_data(@user_says)
 			if response['errorCode'] != "-1"
-				@current_user.profile = {stop_id: @user_says}
-				reply_message  ["Lo tengo! :smile_cat: Parada #{@user_says} - #{response['stop']['direction']}", "Genial! :smiley_cat: Parada #{@user_says} - #{response['stop']['direction']}"].sample
+				reply_message Responses.stop % [@user_says, response['stop']['direction']]
 				@stop_id = @user_says
 				@bus_lines = get_lines(response)
 				if @bus_lines.length > 1
 					@bus_lines.push('Todos')
 				end
-				reply_quick_reply "Tengo datos de estos buses!", @bus_lines
+				reply_quick_reply Responses.buses, @bus_lines
 				state_go
 			else 
-				reply_message ":cat: Oooops. No tengo datos de esta parada. Es posible que no haya autobuses a esta hora.:crying_cat_face:"
+				reply_message Responses.no_buses
 			end	
 		else
-			reply_message [
-				":cat: Creo que me he perdido (soy un poco tonto a veces :crying_cat_face:). Recuerda que puedes escribir AYUDA en cualquier momento!",
-				":crying_cat_face: Oooh, no he entendido eso. Puedes escribir AYUDA cuando quieras si tienes alguna duda!"
-			].sample
+			reply_message Responses.failure
 
 		end
 		typing_off
@@ -135,9 +131,9 @@ class BotLogic < BaseBotLogic
 	def self.get_bus_times
 		typing_indicator
 		if get_message[/todos/i]
-			reply_message ["Okey, aqui tienes :smiley_cat:", "Here you go #{@first_name}! :smile_cat:"].sample
+			reply_message Responses.output % @first_name
 			reply_message get_all_times
-			reply_message [":heart_eyes_cat::heart_eyes_cat:", ":smiley_cat::smiley_cat:"].sample
+			reply_message Responses.emojis
 			state_go 1
 		else
 			regexp = get_message[/(n|m|t|h|e|c)\d{1,}|\d{1,}|(\s|^)(U|H|F|G|A)(\s|$)/i]
@@ -148,22 +144,22 @@ class BotLogic < BaseBotLogic
 					Request.create(user_id: @current_user.id, stop_id: @stop_id, line_id: line_id)
 					previousRequests = Request.filter_last_twenty_minutes.where(line_id: line_id).count
 					if times.length == 1
-						reply_message ":cat:Miau! El bus #{times[0]}.  Es el último del día!"
+						reply_message Responses.last_bus % times[0]
 						state_go 1
 					else
-						reply_message ["El primer bus #{times[0]}, y el siguiente #{times[1]}. :cat: Miau! ", "Ok! :cat: Tu primer bus #{times[0]}, y hay otro que #{times[1]}."].sample
-						reply_message ["Buen viaje #{@first_name}!", "Estoy aqui cuando quieras!:heart_eyes_cat:", "Ten un viaje estupendo! :cat:"].sample
+						reply_message Responses.bus_times % [times[0], times[1]]
+						reply_message Resposes.nice_day % @first_name
 						state_go 1
 					end
 					if previousRequests > 15
-						reply_message "Me han pedido ese bus #{previousRequests} veces en los últimos 20 minutos. Asi q ojico, que igual va petao :scream_cat:"
+						reply_message Responses.previous_requests % previousRequests
 					end
 				else
-					reply_message "No tengo datos de ese bus, sorry. :crying_cat_face:"
+					reply_message Responses.no_data_bus
 					reply_quick_reply "Tengo estos", @bus_lines
 				end
 			else 
-				reply_message "No he entendido eso. Necesito una línea de bus. Volvamos a empezar :cat:"
+				reply_message Responses.fail_bus 
 				state_go 1
 			end
 		end

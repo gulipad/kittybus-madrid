@@ -340,7 +340,7 @@ end
       final_hash
       @final_text = ''
       final_hash.each do |key, array| 
-        @final_text += "Bus #{key}: #{array.join(', ')} \n"
+        @final_text += "Bus #{key}: #{array.join(', ')} minutos\n"
       end
     final_hash
     end

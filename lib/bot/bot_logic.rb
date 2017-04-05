@@ -73,7 +73,7 @@ class BotLogic < BaseBotLogic
 		ai_reply = ai_response[:result][:fulfillment][:speech].to_s
 		ai_score = ai_response[:result][:score]
 
-		if @user_says[/GUARDAR \d{0,5}/i]
+		if @user_says[/GUARDAR \d{0,5}/i] && @user_says.downcase[/GUARDAR \d{0,5}/i] != "guardar "
 			stop_id = @user_says.gsub(/GUARDAR/i, '')
 			User.find_by(id: @current_user.id).favorites.find_by(stop_id: stop_id) ? reject_save_location : save_location(stop_id)
 		elsif @user_says[/BORRAR \d{0,5}/i]

@@ -148,7 +148,7 @@ class BotLogic < BaseBotLogic
 						state_go 1
 					else
 						reply_message Responses.bus_times % [times[0], times[1]]
-						reply_message Resposes.nice_day % @first_name
+						reply_message Responses.nice_day % @first_name
 						state_go 1
 					end
 					if previousRequests > 15

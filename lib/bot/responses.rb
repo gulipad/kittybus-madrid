@@ -110,7 +110,7 @@ class Responses
 		[	
 			":cat: Creo que me he perdido (soy un poco tonto a veces :crying_cat_face:). Recuerda que puedes escribir AYUDA en cualquier momento!",
 			":crying_cat_face: Oooh, no he entendido eso. Puedes escribir AYUDA cuando quieras si tienes alguna duda!",
-			":crying_cat_face: JO, no he entendido eso. Puedes escribir AYUDA cuando quieras si tienes alguna duda!"
+			":crying_cat_face: Jo, no he entendido eso. Puedes escribir AYUDA cuando quieras si tienes alguna duda!"
 		
 		].sample
 	end

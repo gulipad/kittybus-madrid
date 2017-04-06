@@ -151,7 +151,7 @@ class BotLogic < BaseBotLogic
 						reply_message Responses.nice_day % @first_name
 						state_go 1
 					end
-					if previousRequests > 15
+					if previousRequests > 3
 						reply_message Responses.previous_requests % previousRequests
 					end
 					typing_off

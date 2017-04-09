@@ -19,6 +19,7 @@ class BotLogic < BaseBotLogic
       		case @fb_params.payload
       			when "RESETEAR_BOT_BOT"
 	        		reply_message Responses.reset
+	        		state_go 1
         		return
         		when "AYUDA_BOT"
         			list_instructions

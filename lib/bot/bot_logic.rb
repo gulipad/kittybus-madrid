@@ -110,6 +110,7 @@ class BotLogic < BaseBotLogic
 		if @user_says
 			typing_indicator
 			response = get_emt_data(@user_says)
+			puts response
 			if response['errorCode'] != "-1"
 				reply_message Responses.stop % [@user_says, response['stop']['direction']]
 				@stop_id = @user_says
